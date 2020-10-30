@@ -1,0 +1,5 @@
+BubbleSort(A)
+	for i ← 1 to length[A] do
+		for j ← length[A] downto i + 1 do
+			if A[j] < A[j - 1] then
+				A[j] ↔ A[j - 1]

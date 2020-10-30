@@ -1,0 +1,6 @@
+datatype Heap extends Array:
+	contains ← 0
+	left[A, i]:
+		return ((i + 1) * 2) - 1
+	right[A, i]:
+		return ((i + 1) * 2)

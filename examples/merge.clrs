@@ -1,0 +1,20 @@
+Merge(A, p, q, r)
+	n_1 ← q - p +1
+	n_2 ← r - q
+	L ← [n_1 + 1]
+	R ← [n_2 + 1]
+	for i ← 1 to n_1 do
+		L[i] ← A[p + i - 1]
+	for j ← 1 to n_2 do
+		R[i] ← A[q + j]
+	L[n_1 + 1] ← .Inf
+	R[n_2 + 1] ← .Inf
+	i ← 1
+	j ← 1
+	for k ← p to r do
+		if L[i] < R[i] then
+			A[k] ← L[i]
+			i ← i + 1
+		else
+			A[k] ← R[j]
+			j ← j + 1

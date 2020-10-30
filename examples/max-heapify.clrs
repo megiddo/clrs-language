@@ -1,0 +1,12 @@
+MaxHeapify(A, i)
+	l ← left[A, i]
+	r ← right[A, i]
+	if l <= contains[A] and A[l] > A[i] then
+		largest ← l
+	else
+		largest ← i
+	if r <= contains[A] and A[r] > A[largest] then
+		largest ← r
+	if largest != i then
+		A[i] ↔ A[largest]
+		MaxHeapify(A, largest)

@@ -1,0 +1,6 @@
+HeapSort(A)
+	BuildMaxHeap(A)
+	for i ← length[A] downto 2 do
+		A[1] ↔ A[i]
+		contains[A] ← contains[A] - 1
+		MaxHeapify(A, 1)

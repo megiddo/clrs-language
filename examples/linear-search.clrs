@@ -1,0 +1,6 @@
+LinearSearch(A, v)
+	▷ v is the subject of the search
+	for i ← length[A]
+		if v = A[i] then
+			return True
+	return False
