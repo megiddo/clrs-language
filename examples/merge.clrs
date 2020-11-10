@@ -1,3 +1,5 @@
+Module Clrs.Sorting
+
 Merge(A, p, q, r)
 	n_1 ← q - p +1
 	n_2 ← r - q
@@ -7,8 +9,8 @@ Merge(A, p, q, r)
 		L[i] ← A[p + i - 1]
 	for j ← 1 to n_2 do
 		R[i] ← A[q + j]
-	L[n_1 + 1] ← .Inf
-	R[n_2 + 1] ← .Inf
+	L[n_1 + 1] ← ∞
+	R[n_2 + 1] ← ∞
 	i ← 1
 	j ← 1
 	for k ← p to r do

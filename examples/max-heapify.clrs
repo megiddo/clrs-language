@@ -1,3 +1,5 @@
+Module Clrs.Sorting
+
 MaxHeapify(A, i)
 	l ← left[A, i]
 	r ← right[A, i]

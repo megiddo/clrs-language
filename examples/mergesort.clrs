@@ -1,3 +1,5 @@
+Module Clrs.Sorting
+
 MergeSort(A, p, r)
 	if p < r then
 		q ← ⌊(p + r)/2⌋

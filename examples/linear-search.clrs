@@ -1,3 +1,5 @@
+Module Clrs.Sorting
+
 LinearSearch(A, v)
 	▷ v is the subject of the search
 	for i ← length[A]

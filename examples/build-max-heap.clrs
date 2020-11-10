@@ -1,3 +1,5 @@
+Module Clrs.Sorting
+
 BuildMaxHeap(A)
 	contains[A] ← length[A]
 	for i ← ⌊length[A]/2⌋ downto 1 do
