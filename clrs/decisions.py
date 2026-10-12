@@ -1,14 +1,16 @@
-"""Pattern: Observer. Publishes parse, compile, and load decisions on the clrs logger."""
+"""Pattern: Observer. Publishes parse, compile, load, and run decisions on the clrs logger."""
 
 import logging
 from typing import NoReturn
 
 from clrs.errors import CompileError
+from clrs.errors import LinkError
 from clrs.errors import LoadError
+from clrs.errors import RuntimeFault
 
 
 class DecisionLog:
-    """Pattern: Observer. Publishes parse, compile, and load decisions on the clrs logger."""
+    """Pattern: Observer. Publishes parse, compile, load, and run decisions on the clrs logger."""
 
     def __init__(self) -> None:
         self._logger = logging.getLogger("clrs")
@@ -23,3 +25,11 @@ class DecisionLog:
     def refuse(self, outcome: str, message: str, line: int) -> NoReturn:
         self.record("refuse", outcome)
         raise LoadError(message, line)
+
+    def fault(self, outcome: str, message: str) -> NoReturn:
+        self.record("fault", outcome)
+        raise RuntimeFault(message)
+
+    def unlinked(self, outcome: str, message: str) -> NoReturn:
+        self.record("unlinked", outcome)
+        raise LinkError(message)

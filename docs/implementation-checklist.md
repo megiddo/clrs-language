@@ -98,7 +98,7 @@ Directives: `.proc Name`, `.local Name` in slot order, `.end`. Opcodes: `CONST`,
 
 ### M3 — Machine
 
-- [ ] Branch `clrs/m03-machine` from the M2 tip.
+- [x] Branch `clrs/m03-machine` from the M2 tip.
 - Values, array entity, command-per-opcode, explicit frame stack. Facade `Engine` loads real files and runs a driver through lex, parse, textual bytecode, load, and execute.
 - The nine-file table above is green, through that facade, with no fakes.
 - Also lock: parameter rebind is invisible to the caller; element write is visible; `i > 0 and A[i] > key` does not read index 0; `⌊-3/2⌋` is `-2`; `∞` compares above every int; a loop variable survives; `contains` is absent on a fresh array until written; `Heap` records default `contains = 0` and does not apply it.

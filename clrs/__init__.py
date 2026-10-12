@@ -1,22 +1,28 @@
-"""Pattern: Facade. Lex, parse, and lower CLRS modules and drivers to textual bytecode."""
+"""Pattern: Facade. Lex, parse, lower, load, and run CLRS modules and drivers."""
 
 from clrs.ast import Driver
 from clrs.ast import Module
 from clrs.bytecode import Program
 from clrs.compiler import Compiler
 from clrs.decisions import DecisionLog
+from clrs.engine import Engine
 from clrs.errors import CompileError
+from clrs.errors import LinkError
 from clrs.errors import LoadError
+from clrs.errors import RuntimeFault
 from clrs.loader import Loader
 from clrs.parser import Parser
 
 __all__ = [
     "CompileError",
     "Driver",
+    "Engine",
+    "LinkError",
     "LoadError",
     "Module",
     "Parser",
     "Program",
+    "RuntimeFault",
     "compile_driver",
     "compile_module",
     "load_program",

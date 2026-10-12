@@ -40,3 +40,19 @@ class LoadError(Exception):
         self.message = message
         self.line = line
         super().__init__(f"{line}: {message}")
+
+
+class RuntimeFault(Exception):
+    """Pattern: Value Object. A failure while the machine executes loaded bytecode."""
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(message)
+
+
+class LinkError(Exception):
+    """Pattern: Value Object. Loaded modules that cannot be merged into one program."""
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(message)
