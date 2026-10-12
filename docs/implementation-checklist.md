@@ -90,7 +90,7 @@ Directives: `.proc Name`, `.local Name` in slot order, `.end`. Opcodes: `CONST`,
 
 ### M2 — Textual bytecode
 
-- [ ] Branch `clrs/m02-text-bytecode` from the M1 tip.
+- [x] Branch `clrs/m02-text-bytecode` from the M1 tip.
 - A visitor lowers the AST to `.clrsa`. A loader reads `.clrsa` back into instructions and resolves labels. Round-trip the text.
 - Add a TextMate grammar for `.clrsa` on the existing extension: opcodes, labels, directives, `▷` comments.
 - Prove, in the text itself: `and` is two conditional jumps and the right operand is not before the first jump; a `for` re-reads its end expression on each test; `[n_1 + 1]` is `ALLOC`; `[5, 2, 4, 6, 1, 3]` is `CONST`s then `PACK 6`; an exchange evaluates each address expression once.

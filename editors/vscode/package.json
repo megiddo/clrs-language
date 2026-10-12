@@ -1,7 +1,7 @@
 {
   "name": "clrs",
   "displayName": "CLRS",
-  "description": "Highlight .clrs files, rewrite ASCII aliases to book glyphs, and show transcription errors.",
+  "description": "Highlight .clrs and .clrsa files, rewrite ASCII aliases to book glyphs, and show transcription errors.",
   "version": "0.0.1",
   "publisher": "clrs",
   "license": "Apache-2.0",
@@ -18,6 +18,12 @@
         "aliases": ["CLRS", "clrs"],
         "extensions": [".clrs"],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "clrsa",
+        "aliases": ["CLRS bytecode", "clrsa"],
+        "extensions": [".clrsa"],
+        "configuration": "./clrsa-language-configuration.json"
       }
     ],
     "grammars": [
@@ -25,6 +31,11 @@
         "language": "clrs",
         "scopeName": "source.clrs",
         "path": "./syntaxes/clrs.tmLanguage.json"
+      },
+      {
+        "language": "clrsa",
+        "scopeName": "source.clrsa",
+        "path": "./syntaxes/clrsa.tmLanguage.json"
       }
     ],
     "commands": [

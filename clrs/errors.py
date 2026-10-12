@@ -20,6 +20,7 @@ BACKTICK_MESSAGE = (
 )
 TARGET_MESSAGE = "This value cannot be assigned."
 BLOCK_INTRO = "which does not open a block."
+DEFAULT_MESSAGE = "A datatype default must be a literal."
 
 
 class CompileError(Exception):
@@ -30,3 +31,12 @@ class CompileError(Exception):
         self.line = line
         self.column = column
         super().__init__(f"{line}:{column}: {message}")
+
+
+class LoadError(Exception):
+    """Pattern: Value Object. A .clrsa load failure on one line of text."""
+
+    def __init__(self, message: str, line: int) -> None:
+        self.message = message
+        self.line = line
+        super().__init__(f"{line}: {message}")
