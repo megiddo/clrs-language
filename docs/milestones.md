@@ -66,3 +66,24 @@ python3 -m coverage run --source=clrs -m unittest discover -s tests && python3 -
 rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests examples lang editors setup.cfg /tmp/clrs-mut/
 (cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
 ```
+
+## M4 — CLI
+
+- Branch: `clrs/m04-cli`, from `6424db9` (the M3 tip).
+- Why: the M3 `Engine` can now be driven from a shell. `python -m clrs run <files...> -- <driver>` loads each file in order, runs the driver, and prints its last expression and a newline.
+- CLI (`clrs/cli.py`, `clrs/__main__.py`): Pattern: Command. `Invocation` parses the argument list: `run`, then zero or more files, then `--`, then exactly one driver argument. Anything else prints the usage line to stderr and exits 2. Each file load and the driver run is a `Stage` labelled with its path or `driver`. The first `CompileError`, `LoadError`, `LinkError`, or `RuntimeFault` prints `<label>: <kind>: <message>` to stderr, prints nothing to stdout, and exits 1. A file that cannot be read prints `<path>: cannot read: <reason>` and also exits 1. `__main__.py` only passes `sys.argv[1:]` to `main` and exits with its status.
+- Printer (`clrs/printer.py`): Pattern: Strategy. The printer picks a renderer by exact type, so `True` is never printed as `1`. Integers print in decimal, booleans as `True`/`False`, then `∞`, `NIL`, and arrays as `[v1, v2, …]`. A one-element array prints as `[v,]` and an empty array as `[]`. Elements are printed recursively, so a nested array is shown and a nil slot prints as `NIL` (`[2]` prints `[NIL, NIL]`).
+- Tests: `tests/test_cli.py` runs `python -m clrs` in a real subprocess and expects insertion sort to print `[1, 2, 3, 4, 5, 6]` with an empty stderr. The subprocess sets `PYTHONWARNINGS=ignore` because under mutmut the child imports mutmut's trampoline, which warns about deprecated `setup.cfg` keys. The in-process tests cover `runpy` on `__main__` for both a success and a stderr fault, scalars, arrays of length 0, 1, and 2, alloc versus literal, nested arrays, only the last expression printing, the heap family across four files, a compile error in a file (`linear-search.clrs` line 5) and in the driver, a runtime nil fault from `merge.clrs`, a duplicate-definition link error, an unreadable file, the first fault stopping the run, and six malformed command lines. 274 tests in all.
+- Coverage: 2321 of 2321 statements in `clrs/` (100%).
+- Mutmut 3.8: 3358 killed, 8 timed out, 77 survived, of 3443. Killed is 97.5%. One survivor is in the new modules, and it is equivalent: the initial `result` in `RunCommand._stages`, which the driver stage always overwrites before printing. The other 76 are in the M1 to M3 modules, as before.
+- Decision logs tested in `tests/test_cli_decisions.py`, records only: `cli usage`, `cli run`, `cli compile`, `cli link`, `cli runtime`, `cli file`, `print integer`, `print boolean`, `print infinity`, `print nil`, `print array`, and `print single`. `cli load` exists in the fault table, but the command line cannot reach it, because compiled driver text always loads.
+
+Commands:
+
+```sh
+python3 -m unittest discover -s tests
+python3 -m coverage run --source=clrs -m unittest discover -s tests && python3 -m coverage report -m
+rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests examples lang editors setup.cfg /tmp/clrs-mut/
+(cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
+python3 -m clrs run examples/insertion-sort.clrs -- 'A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A'
+```

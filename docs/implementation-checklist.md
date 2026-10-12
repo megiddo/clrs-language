@@ -105,6 +105,6 @@ Directives: `.proc Name`, `.local Name` in slot order, `.end`. Opcodes: `CONST`,
 
 ### M4 — CLI
 
-- [ ] Branch `clrs/m04-cli` from the M3 tip.
+- [x] Branch `clrs/m04-cli` from the M3 tip.
 - `python -m clrs run <files> -- <driver>` prints the last expression. Integers in decimal. `True`, `False`, `NIL`, `∞`. Arrays as `[v1, v2, …]`, length 1 as `[v,]`, length 0 as `[]`.
 - One test runs insertion sort through the command line and expects `[1, 2, 3, 4, 5, 6]`. Compile and runtime faults print to stderr and exit 1.
