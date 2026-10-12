@@ -1,0 +1,38 @@
+{
+  "scopeName": "source.clrs",
+  "name": "CLRS",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#backtick" },
+    { "include": "#keyword" },
+    { "include": "#constant" },
+    { "include": "#number" },
+    { "include": "#operator" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "(▷|\\|>).*$",
+      "name": "comment.line.clrs"
+    },
+    "backtick": {
+      "match": "`",
+      "name": "invalid.illegal.backtick.clrs"
+    },
+    "keyword": {
+      "match": "\\b(Module|datatype|extends|for|to|downto|do|while|if|then|else|return|and|or)\\b",
+      "name": "keyword.control.clrs"
+    },
+    "constant": {
+      "match": "\\b(True|False|NIL)\\b|∞",
+      "name": "constant.language.clrs"
+    },
+    "number": {
+      "match": "\\b[0-9]+\\b",
+      "name": "constant.numeric.clrs"
+    },
+    "operator": {
+      "match": "←|↔|≤|≥|≠|⌊|⌋|⌈|⌉|<-|<->|<=|>=|!=|\\|\\.|\\.\\||\\|\\^|\\^\\||\\.Inf",
+      "name": "keyword.operator.clrs"
+    }
+  }
+}

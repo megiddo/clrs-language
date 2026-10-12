@@ -1,0 +1,37 @@
+{
+  "name": "clrs",
+  "displayName": "CLRS",
+  "description": "Highlight .clrs files, rewrite ASCII aliases to book glyphs, and show transcription errors.",
+  "version": "0.0.1",
+  "publisher": "clrs",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Programming Languages", "Linters"],
+  "activationEvents": ["onLanguage:clrs"],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "clrs",
+        "aliases": ["CLRS", "clrs"],
+        "extensions": [".clrs"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "clrs",
+        "scopeName": "source.clrs",
+        "path": "./syntaxes/clrs.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "clrs.rewriteAliases",
+        "title": "CLRS: Rewrite ASCII Aliases"
+      }
+    ]
+  }
+}
