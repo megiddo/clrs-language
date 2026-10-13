@@ -4,6 +4,7 @@ import sys
 import unittest
 
 from clrs import Engine
+from clrs import LinkError
 from clrs import RuntimeFault
 from clrs.vm.values import INFINITY
 from clrs.vm.values import NIL
@@ -264,7 +265,37 @@ class CallTest(FaultCase):
 
     def test_arity(self) -> None:
         self.assertEqual(machine().run("Ignore(1, 2, 3)"), 0)
-        self.assertEqual(self.fault("Fact(1, 2)"), "Fact takes at most 1 argument(s), not 2.")
+        cases = {
+            "Fact(1, 2)": "the driver calls Fact with 2 argument(s), but Fact takes 1.",
+            "Fact()": "the driver calls Fact with 0 argument(s), but Fact takes 1.",
+            "Ignore(1, 2)": "the driver calls Ignore with 2 argument(s), but Ignore takes 3.",
+            "Last(1)": "the driver calls Last with 1 argument(s), but Last takes 0.",
+        }
+        for driver, message in cases.items():
+            with self.subTest(driver=driver):
+                with self.assertRaises(LinkError) as caught:
+                    machine().run(driver)
+                self.assertEqual(caught.exception.message, message)
+
+    def test_too_few_arguments_cannot_spill_into_locals(self) -> None:
+        engine = Engine()
+        engine.load_source("Module M\nP(a)\n\tb ← 2\n\treturn a + b\n")
+        with self.assertRaises(LinkError):
+            engine.run("P(1, 5)")
+        self.assertEqual(engine.run("P(1)"), 3)
+
+    def test_arity_is_checked_at_link_even_if_the_call_never_runs(self) -> None:
+        engine = Engine()
+        engine.load_source("Module M\nP(A)\n\treturn Q(A, 1)\nQ(A)\n\treturn 0\n")
+        with self.assertRaises(LinkError) as caught:
+            engine.run("1")
+        self.assertEqual(caught.exception.message, "P calls Q with 2 argument(s), but Q takes 1.")
+
+    def test_calls_across_files_link_after_both_load(self) -> None:
+        engine = Engine()
+        engine.load_source("Module M\nP(A)\n\treturn Q(A)\n")
+        engine.load_source("Module M\nQ(A)\n\treturn 5\n")
+        self.assertEqual(engine.run("P(1)"), 5)
 
     def test_arguments_bind_in_order(self) -> None:
         source = "Module M\nMinus(a, b)\n\treturn a - b\n"

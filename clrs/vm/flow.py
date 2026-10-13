@@ -32,14 +32,14 @@ class JumpIfFalse:
 
 
 class Call:
-    """Pattern: Command. CALL pushes a new frame; arguments bind the callee's first slots."""
+    """Pattern: Command. CALL pushes a new frame; arguments bind the callee's parameters."""
 
     def execute(self, machine: object, frame: Frame, instruction: Instruction) -> None:
         name = str(instruction.operands[0])
         arity = int(instruction.operands[1])  # type: ignore[call-overload]
         routine = machine.routine(name)  # type: ignore[attr-defined]
-        if arity > len(routine.locals):
-            message = f"{name} takes at most {len(routine.locals)} argument(s), not {arity}."
+        if arity != len(routine.parameters):
+            message = f"{name} takes {len(routine.parameters)} argument(s), not {arity}."
             machine.log.fault("arity", message)  # type: ignore[attr-defined]
         arguments = frame.pop_many(arity)
         machine.log.record("call", "procedure")  # type: ignore[attr-defined]

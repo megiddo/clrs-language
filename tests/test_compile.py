@@ -13,7 +13,7 @@ EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 INSERTION_SORT = """\
 ▷ Module Clrs.Sorting
 .proc InsertionSort
-.local A
+.param A
 .local j
 .local key
 .local i
@@ -88,8 +88,8 @@ HEAP = """\
 .default contains 0
 .end
 .proc left
-.local A
-.local i
+.param A
+.param i
 ▷ return ((i + 1) * 2) - 1
 LOAD i
 CONST 1
@@ -103,8 +103,8 @@ CONST NIL
 RET
 .end
 .proc right
-.local A
-.local i
+.param A
+.param i
 ▷ return ((i + 1) * 2)
 LOAD i
 CONST 1
@@ -328,10 +328,36 @@ class ExchangeTest(unittest.TestCase):
 
     def test_temporaries_are_reused_and_declared_after_locals(self) -> None:
         text = compile_module("Module M\nP(A, x)\n\tA[1] ↔ A[x]\n\tA[x] ↔ A[1]\n\tk ← 1\n")
-        declared = [line for line in text.splitlines() if line.startswith(".local")]
+        declared = [line for line in text.splitlines() if line.startswith((".param", ".local"))]
         self.assertEqual(
             declared,
-            [".local A", ".local x", ".local k", *[f".local ${n}" for n in range(1, 6)]],
+            [".param A", ".param x", ".local k", *[f".local ${n}" for n in range(1, 6)]],
+        )
+
+
+class ParameterTest(unittest.TestCase):
+    def declarations(self, text: str) -> list[str]:
+        return [line for line in text.splitlines() if line.startswith(".")]
+
+    def test_every_parameter_is_a_param_in_order(self) -> None:
+        text = compile_module("Module M\nP(c, a, b)\n\tx ← a\n\treturn c\n")
+        self.assertEqual(
+            self.declarations(text),
+            [".proc P", ".param c", ".param a", ".param b", ".local x", ".end"],
+        )
+
+    def test_assigned_parameter_is_not_also_a_local(self) -> None:
+        text = compile_module("Module M\nP(n)\n\tn ← n + 1\n\tfor i ← 1 to n do\n\t\tn ← i\n")
+        self.assertEqual(self.declarations(text), [".proc P", ".param n", ".local i", ".end"])
+
+    def test_no_parameters_and_the_driver_have_no_param(self) -> None:
+        self.assertEqual(self.declarations(compile_module("Module M\nP()\n\treturn 1\n")), [".proc P", ".end"])
+        self.assertNotIn(".param", compile_driver("A ← [1,]; A"))
+
+    def test_method_parameters_are_params(self) -> None:
+        self.assertEqual(
+            self.declarations(example("heap.clrs"))[3:],
+            [".proc left", ".param A", ".param i", ".end", ".proc right", ".param A", ".param i", ".end"],
         )
 
 

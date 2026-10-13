@@ -87,3 +87,28 @@ rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests exampl
 (cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
 python3 -m clrs run examples/insertion-sort.clrs -- 'A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A'
 ```
+
+## M6 — Parameter slots in `.clrsa`
+
+- Branch: `clrs/m06-param-slots`, from `4e81344` (the phase-2 tip on `clrs/m05-plan-stack`).
+- Why: `.clrsa` now records which slots are parameters, so a call with the wrong number of arguments is caught before a run instead of silently binding into ordinary locals.
+- Format: each routine lists `.param Name` for every procedure or method parameter, in order, then `.local Name` for every other slot (assigned names, loop variables, and exchange temporaries `$n`), then code. A parameter that is also assigned is a `.param` only. `.driver` blocks have no `.param`. `Routine` gains `parameters` beside `locals` (now non-parameter slots only) and `slots()` for both in order; `Program.text()` writes `.param` lines back out.
+- Loader (`clrs/bytecode/blocks.py`, `loader.py`): `.param` is a directive with one operand. It must come before any `.local`, label, or instruction, and a name may be declared only once across `.param` and `.local`. `.param` outside a block, inside a `.datatype`, or inside a `.driver` (`DriverBlock`) is refused. All of these raise `LoadError` with a line number.
+- Link (`clrs/run/linker.py`): Pattern: Specification. `Engine.run` checks every `CALL` in every loaded routine and in the driver against the callee's `.param` count before the machine starts. Too few or too many arguments raises `LinkError` (`the driver calls Fact with 2 argument(s), but Fact takes 1.`), even when that call would never run. A callee that is not loaded is left to the machine, which faults only if the call runs, so `MergeSort` without `merge.clrs` still faults with `Merge is not a loaded procedure.` The CLI reports the error as `driver: link error: …` and exits 1. `clrs compile` does not link, because a library's callees may come from files that are not on the command line.
+- Machine: a frame binds arguments to `.param` slots only. `CALL` faults at run time unless the argument count equals the parameter count, for hand-written `.clrsa` run on `Machine` directly.
+- Known M3 gap closed: a call with too few arguments, or with extra arguments that spill into non-parameter locals, was not caught. Now both are a `LinkError` through the engine and a `RuntimeFault` on unlinked text.
+- Editor: `syntaxes/clrsa.tmLanguage.json` highlights `.param` as a directive.
+- Tests: snapshots of `insertion-sort.clrs` and `heap.clrs` refreshed (`.param A`, `.param i`); `ParameterTest` in `tests/test_compile.py` (parameters in order, an assigned parameter is not also a local, no `.param` for a zero-parameter procedure or a driver, methods); `.param` round trip and nine new loader faults in `tests/test_load.py`; link-time arity for too many, too few, zero-parameter, an uncalled procedure, and calls across two files in `tests/test_machine.py`; run-time arity on unlinked text, parameter binding, and deferral of an unknown callee in `tests/test_runtime.py`; a CLI link error in `tests/test_cli.py`; `.param` in `tests/test_clrsa_grammar.py`. The nine-file table is unchanged and green. 295 tests in all.
+- Coverage: 2498 of 2518 statements in `clrs/` (99%). The 20 missed lines are in the M4/M5 CLI modules; every module changed here is at 100%.
+- Mutmut 3.8: 3683 killed, 9 timed out, 50 survived, 10 with no tests, of 3752. Killed is 98.2%. No survivor is in a module changed by M6; the one timeout in a changed module (`Frame.fetch`) makes a frame never advance past its end, which loops until the timeout.
+- Decision logs tested in `tests/test_run_decisions.py` and `tests/test_bytecode_decisions.py`, records only: `link call`, `link deferred`, `unlinked arity`, `fault arity` (now on unlinked text), `refuse param` (order and duplicates), `refuse local` (a `.local` that repeats a `.param`), and `refuse block` (`.param` in a driver).
+
+Commands:
+
+```sh
+python3 -m unittest discover -s tests
+python3 -m coverage run --source=clrs -m unittest discover -s tests && python3 -m coverage report -m
+rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests examples lang editors setup.cfg /tmp/clrs-mut/
+(cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
+python3 -m clrs compile examples/insertion-sort.clrs
+```

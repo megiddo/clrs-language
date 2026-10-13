@@ -121,6 +121,11 @@ class CommandLineTest(unittest.TestCase):
         message = f"{path}: link error: InsertionSort in Clrs.Sorting is already defined."
         self.assert_fault(("run", path, path, "--", "1"), message)
 
+    def test_arity_is_a_link_error_of_the_driver(self) -> None:
+        path = example("insertion-sort.clrs")
+        message = "driver: link error: the driver calls InsertionSort with 2 argument(s), but InsertionSort takes 1."
+        self.assert_fault(("run", path, "--", "A ← [2, 1]; InsertionSort(A, 1)"), message)
+
     def test_unreadable_file(self) -> None:
         missing = str(ROOT / "missing.clrs")
         self.assert_fault(("run", missing, "--", "1"), f"{missing}: cannot read: No such file or directory")

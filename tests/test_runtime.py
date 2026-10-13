@@ -61,9 +61,24 @@ class LoadedTextTest(unittest.TestCase):
     def test_call_pops_its_arguments_and_pushes_the_result(self) -> None:
         text = (
             ".driver\nCONST 7\nCONST 10\nCONST 3\nCALL Minus 2\nSUB\nRET\n.end\n"
-            ".proc Minus\n.local a\n.local b\nLOAD a\nLOAD b\nSUB\nRET\n.end\n"
+            ".proc Minus\n.param a\n.param b\nLOAD a\nLOAD b\nSUB\nRET\n.end\n"
         )
         self.assertEqual(execute(text), 0)
+
+    def test_unlinked_text_still_faults_on_arity_at_run(self) -> None:
+        proc = ".proc Two\n.param a\n.param b\n.local c\nCONST 0\nRET\n.end\n"
+        cases = {
+            ".driver\nCONST 1\nCALL Two 1\nRET\n.end\n": "Two takes 2 argument(s), not 1.",
+            ".driver\nCONST 1\nCONST 2\nCONST 3\nCALL Two 3\nRET\n.end\n": "Two takes 2 argument(s), not 3.",
+        }
+        for driver, message in cases.items():
+            with self.subTest(driver=driver):
+                self.assertEqual(self.fault(driver + proc), message)
+        self.assertEqual(execute(".driver\nCONST 1\nCONST 2\nCALL Two 2\nRET\n.end\n" + proc), 0)
+
+    def test_arguments_bind_parameters_and_leave_locals_unassigned(self) -> None:
+        proc = ".proc P\n.param a\n.local b\nLOAD b\nRET\n.end\n"
+        self.assertEqual(self.fault(".driver\nCONST 1\nCALL P 1\nRET\n.end\n" + proc), "b is read before it is assigned.")
 
     def test_pop_discards_only_the_top(self) -> None:
         self.assertEqual(execute(".driver\nCONST 1\nCONST 2\nPOP\nRET\n.end\n"), 1)
@@ -143,6 +158,14 @@ class EngineTest(unittest.TestCase):
         self.assertEqual(self.link(sort, sort), "InsertionSort in Clrs.Sorting is already defined.")
         self.assertEqual(self.link(heap, heap), "Heap in Clrs.Sorting is already defined.")
         self.assertEqual(self.link(heap, clash), "Heap in Other is already defined.")
+
+    def test_unknown_callee_is_left_to_the_machine(self) -> None:
+        engine = Engine()
+        engine.load_source("Module M\nP()\n\treturn Gone(1)\n")
+        self.assertEqual(engine.run("2"), 2)
+        with self.assertRaises(RuntimeFault) as caught:
+            engine.run("P()")
+        self.assertEqual(caught.exception.message, "Gone is not a loaded procedure.")
 
     def test_unknown_module_and_datatype(self) -> None:
         engine = Engine()

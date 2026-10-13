@@ -44,6 +44,7 @@ class SemanticTest(unittest.TestCase):
             ".proc",
             "P",
             ("x",),
+            (),
             (
                 op(Opcode.LOAD, "x"),
                 op(Opcode.CONST, IntegerConstant(0)),
@@ -75,6 +76,7 @@ class SemanticTest(unittest.TestCase):
                     Routine(
                         ".driver",
                         "",
+                        (),
                         ("A",),
                         (
                             op(Opcode.CONST, IntegerConstant(5)),
@@ -134,6 +136,13 @@ class TextTest(unittest.TestCase):
     def test_comments_blank_lines_and_indent_are_ignored(self) -> None:
         text = "▷ head\n\n.driver ▷ open\n   CONST 1 ▷ one\n\t\nRET\n.end\n"
         self.assertEqual(load_program(text).text(), ".driver\nCONST 1\nRET\n.end\n")
+
+    def test_params_then_locals_round_trip(self) -> None:
+        text = ".proc P\n.param a\n.param b\n.local c\nLOAD a\nLOAD b\nSTORE c\nLOAD c\nRET\n.end\n"
+        routine = load_program(text).blocks[0]
+        self.assertEqual((routine.parameters, routine.locals), (("a", "b"), ("c",)))
+        self.assertEqual(routine.slots(), ("a", "b", "c"))
+        self.assertEqual(load_program(text).text(), text)
 
     def test_labels_at_one_index_and_at_the_end(self) -> None:
         text = ".proc P\nA:\nB:\nJUMP B\nC:\n.end\n"
@@ -197,6 +206,15 @@ class FaultTest(unittest.TestCase):
         (".proc P\nRET\n.local x\n.end\n", 3, ".local must come before the first instruction."),
         (".proc P\nL:\n.local x\n.end\n", 3, ".local must come before the first instruction."),
         (".proc P\n.local x\n.local x\n.end\n", 3, "x is declared twice."),
+        (".param x\n", 1, ".param cannot appear outside a block."),
+        (".param\n", 1, ".param takes 1 operand(s)."),
+        (".datatype H Array\n.param x\n", 2, ".param cannot appear inside .datatype H."),
+        (".driver\n.param x\n.end\n", 2, ".param cannot appear inside .driver."),
+        (".proc P\n.local y\n.param x\n.end\n", 3, ".param must come before .local and the first instruction."),
+        (".proc P\nRET\n.param x\n.end\n", 3, ".param must come before .local and the first instruction."),
+        (".proc P\nL:\n.param x\n.end\n", 3, ".param must come before .local and the first instruction."),
+        (".proc P\n.param x\n.param x\n.end\n", 3, "x is declared twice."),
+        (".proc P\n.param x\n.local x\n.end\n", 3, "x is declared twice."),
     ]
 
     def test_faults(self) -> None:

@@ -6,10 +6,11 @@ from clrs.bytecode import render
 
 
 class RoutineListing:
-    """Pattern: Builder. Accumulates one routine's locals, labels, comments, and opcodes."""
+    """Pattern: Builder. Accumulates one routine's slots, labels, comments, and opcodes."""
 
-    def __init__(self, header: str, names: tuple[str, ...]) -> None:
+    def __init__(self, header: str, parameters: tuple[str, ...], names: tuple[str, ...]) -> None:
         self._header = header
+        self._parameters = parameters
         self._locals = list(names)
         self._body: list[str] = []
         self._labels = 0
@@ -45,5 +46,6 @@ class RoutineListing:
         return name
 
     def lines(self) -> list[str]:
-        locals_ = [f".local {name}" for name in self._locals]
-        return [self._header, *locals_, *self._body, ".end"]
+        params = [f".param {name}" for name in self._parameters]
+        locals_ = [f".local {name}" for name in self._locals[len(self._parameters) :]]
+        return [self._header, *params, *locals_, *self._body, ".end"]

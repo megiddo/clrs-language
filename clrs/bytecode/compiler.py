@@ -49,7 +49,7 @@ class Compiler:
         parameters: tuple[str, ...],
         body: tuple[object, ...],
     ) -> list[str]:
-        listing = RoutineListing(header, LocalNames(parameters).collect(body))
+        listing = RoutineListing(header, parameters, LocalNames(parameters).collect(body))
         StatementLowering(listing, self._source, self._log).lower(body)
         listing.op(Opcode.CONST, NilConstant())
         listing.op(Opcode.RET)
@@ -75,7 +75,7 @@ class Compiler:
 
     def visit_driver(self, node: Driver) -> list[str]:
         self._log.record("compile", "driver")
-        listing = RoutineListing(".driver", LocalNames(()).collect(node.statements))
+        listing = RoutineListing(".driver", (), LocalNames(()).collect(node.statements))
         statements = StatementLowering(listing, self._source, self._log)
         statements.lower(node.statements)
         statements.comment(node.result)

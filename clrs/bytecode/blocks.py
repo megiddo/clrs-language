@@ -26,6 +26,9 @@ class Block:
     def open(self, directive: str, words: list[str], line: int) -> "Block":
         self._refuse(directive, line)
 
+    def param(self, name: str, line: int) -> None:
+        self._refuse(".param", line)
+
     def local(self, name: str, line: int) -> None:
         self._refuse(".local", line)
 
@@ -54,7 +57,7 @@ class ClosedBlock(Block):
             return DatatypeBlock(words[0], words[1], self._log)
         if directive == ".driver":
             self._log.record("load", "driver")
-            return RoutineBlock(".driver", "", self._log)
+            return DriverBlock(".driver", "", self._log)
         self._log.record("load", "procedure")
         return RoutineBlock(".proc", words[0], self._log)
 
@@ -83,26 +86,41 @@ class DatatypeBlock(Block):
 
 
 class RoutineBlock(Block):
-    """Pattern: Builder. Collects locals, labels, and instructions, then resolves jumps."""
+    """Pattern: Builder. Collects parameters, locals, labels, and instructions, then resolves jumps."""
 
     def __init__(self, directive: str, name: str, log: DecisionLog) -> None:
         super().__init__(log)
         self._directive = directive
         self._name = name
+        self._parameters: list[str] = []
         self._locals: list[str] = []
+        self._slots: list[str] = []
         self._labels: list[tuple[str, int]] = []
         self._pending: list[tuple[Opcode, tuple[object, ...], int]] = []
-        self._operands = OperandReader(self._locals, log)
+        self._operands = OperandReader(self._slots, log)
 
     def place(self) -> str:
         return " ".join(part for part in ("inside", self._directive, self._name) if part)
 
+    def param(self, name: str, line: int) -> None:
+        if self._started() or len(self._locals) > 0:
+            self._log.refuse("param", ".param must come before .local and the first instruction.", line)
+        self._declare("param", name, line)
+        self._parameters.append(name)
+
     def local(self, name: str, line: int) -> None:
-        if len(self._pending) > 0 or len(self._labels) > 0:
+        if self._started():
             self._log.refuse("local", ".local must come before the first instruction.", line)
-        if name in self._locals:
-            self._log.refuse("local", f"{name} is declared twice.", line)
+        self._declare("local", name, line)
         self._locals.append(name)
+
+    def _started(self) -> bool:
+        return len(self._pending) > 0 or len(self._labels) > 0
+
+    def _declare(self, outcome: str, name: str, line: int) -> None:
+        if name in self._slots:
+            self._log.refuse(outcome, f"{name} is declared twice.", line)
+        self._slots.append(name)
 
     def label(self, name: str, line: int) -> None:
         if name in dict(self._labels):
@@ -126,6 +144,7 @@ class RoutineBlock(Block):
         return Routine(
             self._directive,
             self._name,
+            tuple(self._parameters),
             tuple(self._locals),
             instructions,
             tuple(self._labels),
@@ -140,3 +159,10 @@ class RoutineBlock(Block):
             self._log.refuse("label", f"{label} is not defined.", line)
         self._log.record("label", "resolve")
         return Instruction(opcode, (Target(label, labels[label]),))
+
+
+class DriverBlock(RoutineBlock):
+    """Pattern: Builder. A routine block for the driver, which nothing calls, so it has no parameters."""
+
+    def param(self, name: str, line: int) -> None:
+        self._refuse(".param", line)

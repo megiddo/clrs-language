@@ -53,7 +53,9 @@ Do not repair legal transcriptions inside the compiler. `examples/linear-search.
 
 ### M6 — Parameter slots in `.clrsa`
 
-- [ ] Branch `clrs/m06-param-slots` from phase-2 tip.
+- [x] Branch `clrs/m06-param-slots` from phase-2 tip.
+- Chosen layout: all `.param` lines first, then `.local` lines, then code. A `.param` after a `.local`, a label, or an instruction is a `LoadError`; so is `.param` in a `.driver` block.
+- Chosen layer: link time. `Engine.run` checks every `CALL` against its callee's `.param` count before the machine starts (`clrs/run/linker.py`), so a mismatch is a `LinkError` even if the call never runs. A callee that is not loaded is left to the machine. The machine still checks exact arity at run time for hand-written `.clrsa` that never goes through the engine.
 - Add `.param Name` directives after `.local` block (or interleaved: all `.param` then `.local` temps — pick one, document in checklist when done). Parameters are the first N slots; `.local` lists only non-parameter locals including temps.
 - Compiler emits `.param` for each procedure/method parameter in order.
 - Loader: `CALL` arity must match parameter count; too few or too many arguments is **LinkError** at load or link time (choose one layer, test both paths if split).

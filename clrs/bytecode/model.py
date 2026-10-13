@@ -121,17 +121,25 @@ class Instruction:
 
 @dataclass(frozen=True)
 class Routine:
-    """Pattern: Value Object. A procedure or driver: locals in slot order and instructions."""
+    """Pattern: Value Object. A procedure or driver: parameters, then other locals, then code."""
 
     directive: str
     name: str
+    parameters: tuple[str, ...]
     locals: tuple[str, ...]
     instructions: tuple[Instruction, ...]
     labels: tuple[tuple[str, int], ...]
 
+    def slots(self) -> tuple[str, ...]:
+        return self.parameters + self.locals
+
     def lines(self) -> list[str]:
         header = " ".join(part for part in (self.directive, self.name) if part)
-        lines = [header, *[f".local {name}" for name in self.locals]]
+        lines = [
+            header,
+            *[f".param {name}" for name in self.parameters],
+            *[f".local {name}" for name in self.locals],
+        ]
         for index, instruction in enumerate(self.instructions):
             lines.extend(self._labels_at(index))
             lines.append(instruction.text())

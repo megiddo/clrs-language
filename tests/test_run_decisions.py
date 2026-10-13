@@ -80,7 +80,12 @@ class RunDecisionLogTest(unittest.TestCase):
         self.assertEqual(self.run_driver("P()", condition)[-1], "fault condition")
         down = "Module M\nDown(n)\n\tif n > 0 then\n\t\treturn Down(n - 1)\n\treturn 0\n"
         self.assertEqual(self.run_driver("Down(10000)", down)[-1], "fault depth")
-        self.assertEqual(self.run_driver("Down(1, 2)", down)[-1], "fault arity")
+
+    def test_arity_fault_on_unlinked_text(self) -> None:
+        text = ".driver\nCALL P 1\nRET\n.end\n.proc P\nRET\n.end\n"
+        blocks = load_program(text).blocks
+        machine = Machine({"P": blocks[1]}, DecisionLog())
+        self.assertEqual(self.decisions(lambda: machine.run(blocks[0]), RUNNING)[-1], "fault arity")
 
     def test_loaded_text_faults(self) -> None:
         cases = {
@@ -107,6 +112,20 @@ class RunDecisionLogTest(unittest.TestCase):
         sort = (EXAMPLES / "insertion-sort.clrs").read_text()
         self.assertEqual(self.link(heap, sort), ["module open", "module datatype", "module merge"])
         self.assertEqual(self.link(sort, sort), ["module open", "module merge", "unlinked duplicate"])
+
+    def linked(self, driver: str, *sources: str) -> list[str]:
+        engine = Engine()
+        for source in sources:
+            engine.load_source(source)
+        return self.decisions(lambda: engine.run(driver), {"link", "unlinked"})
+
+    def test_link_calls(self) -> None:
+        self.assertEqual(self.linked("1"), [])
+        source = "Module M\nP(a)\n\treturn a\n"
+        self.assertEqual(self.linked("P(1)", source), ["link call"])
+        self.assertEqual(self.linked("Nope()", source), ["link deferred"])
+        self.assertEqual(self.linked("P()", source), ["unlinked arity"])
+        self.assertEqual(self.linked("P(1, 2)", source), ["unlinked arity"])
 
     def test_unknown_lookups(self) -> None:
         engine = Engine()

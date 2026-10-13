@@ -14,8 +14,8 @@ class Frame:
     def __init__(self, routine: Routine, arguments: tuple[object, ...], log: DecisionLog) -> None:
         self._routine = routine
         self._log = log
-        self._slots = {name: UNASSIGNED for name in routine.locals}
-        for name, value in zip(routine.locals, arguments):
+        self._slots = {name: UNASSIGNED for name in routine.slots()}
+        for name, value in zip(routine.parameters, arguments):
             self._slots[name] = value
         self._operands: list[object] = []
         self._counter = 0

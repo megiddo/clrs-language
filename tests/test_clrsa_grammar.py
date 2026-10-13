@@ -51,6 +51,13 @@ class ClrsaGrammarTest(unittest.TestCase):
         for name in COMPARISON_NAMES.values():
             self.assertIsNotNone(comparison.fullmatch(name))
 
+    def test_param_is_a_directive_with_a_named_slot(self) -> None:
+        directive = re.compile(self.repository["directive"]["match"])
+        match = directive.match("  .param key ▷ first slot")
+        self.assertEqual((match.group(1), match.group(2).strip()), (".param", "key"))
+        self.assertIsNone(directive.match(".parameter x"))
+        self.assertIn(".param", DIRECTIVES)
+
 
 if __name__ == "__main__":
     unittest.main()

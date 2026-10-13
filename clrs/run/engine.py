@@ -8,6 +8,7 @@ from clrs.bytecode.compiler import Compiler
 from clrs.common.decisions import DecisionLog
 from clrs.bytecode.loader import Loader
 from clrs.vm.machine import Machine
+from clrs.run.linker import Linker
 from clrs.run.modules import ModuleRepository
 from clrs.front.parser import Parser
 
@@ -42,7 +43,9 @@ class Engine:
     def run(self, source: str) -> object:
         program = Loader().load(self.compile_driver(source))
         driver: Routine = program.blocks[0]  # type: ignore[assignment]
-        return Machine(self._modules.routines(), self._log).run(driver)
+        routines = self._modules.routines()
+        Linker(self._log).link(routines, driver)
+        return Machine(routines, self._log).run(driver)
 
     def listing(self, module: str) -> str:
         return self._modules.listing(module)

@@ -6,7 +6,15 @@ from clrs.bytecode import COMMENT
 from clrs.bytecode import Program
 from clrs.common.decisions import DecisionLog
 
-DIRECTIVES = {".proc": 1, ".driver": 0, ".datatype": 2, ".local": 1, ".default": 2, ".end": 0}
+DIRECTIVES = {
+    ".proc": 1,
+    ".driver": 0,
+    ".datatype": 2,
+    ".param": 1,
+    ".local": 1,
+    ".default": 2,
+    ".end": 0,
+}
 OPENERS = frozenset({".proc", ".driver", ".datatype"})
 
 
@@ -36,6 +44,9 @@ class ProgramBuilder:
             self._log.refuse("directive", f"{head} takes {DIRECTIVES[head]} operand(s).", number)
         if head in OPENERS:
             self._block = self._block.open(head, words, number)
+            return
+        if head == ".param":
+            self._block.param(words[0], number)
             return
         if head == ".local":
             self._block.local(words[0], number)
