@@ -6,7 +6,7 @@ from pathlib import Path
 from clrs import CompileError
 from clrs import compile_driver
 from clrs import compile_module
-from clrs.errors import DEFAULT_MESSAGE
+from clrs.common.errors import DEFAULT_MESSAGE
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 

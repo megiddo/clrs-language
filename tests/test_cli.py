@@ -11,7 +11,7 @@ from unittest import mock
 
 from clrs.cli import RunCommand
 from clrs.cli import USAGE
-from clrs.decisions import DecisionLog
+from clrs.common.decisions import DecisionLog
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / "examples"

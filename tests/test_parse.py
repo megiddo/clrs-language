@@ -2,19 +2,19 @@ import dataclasses
 import unittest
 from pathlib import Path
 
-import clrs.ast as ast
+import clrs.front.ast as ast
 from clrs import CompileError
 from clrs import parse_driver
 from clrs import parse_module
-from clrs.errors import CEILING_MESSAGE
-from clrs.errors import CHAIN_MESSAGE
-from clrs.errors import FLOOR_MESSAGE
-from clrs.errors import FOR_DIRECTION_MESSAGE
-from clrs.errors import FOR_END_MESSAGE
-from clrs.errors import LENGTH_MESSAGE
-from clrs.errors import OR_MESSAGE
-from clrs.errors import SLASH_MESSAGE
-from clrs.errors import TARGET_MESSAGE
+from clrs.common.errors import CEILING_MESSAGE
+from clrs.common.errors import CHAIN_MESSAGE
+from clrs.common.errors import FLOOR_MESSAGE
+from clrs.common.errors import FOR_DIRECTION_MESSAGE
+from clrs.common.errors import FOR_END_MESSAGE
+from clrs.common.errors import LENGTH_MESSAGE
+from clrs.common.errors import OR_MESSAGE
+from clrs.common.errors import SLASH_MESSAGE
+from clrs.common.errors import TARGET_MESSAGE
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 

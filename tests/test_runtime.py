@@ -12,15 +12,15 @@ from clrs.bytecode import InfinityConstant
 from clrs.bytecode import IntegerConstant
 from clrs.bytecode import NilConstant
 from clrs.bytecode import Routine
-from clrs.decisions import DecisionLog
-from clrs.machine import COMMANDS
-from clrs.machine import Machine
-from clrs.values import INFINITY
-from clrs.values import NIL
-from clrs.values import UNASSIGNED
-from clrs.values import ClrsArray
-from clrs.values import constant_value
-from clrs.values import kind
+from clrs.common.decisions import DecisionLog
+from clrs.vm.machine import COMMANDS
+from clrs.vm.machine import Machine
+from clrs.vm.values import INFINITY
+from clrs.vm.values import NIL
+from clrs.vm.values import UNASSIGNED
+from clrs.vm.values import ClrsArray
+from clrs.vm.values import constant_value
+from clrs.vm.values import kind
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 

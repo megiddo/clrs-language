@@ -10,8 +10,8 @@ from clrs import Engine
 from clrs import LinkError
 from clrs import RuntimeFault
 from clrs import load_program
-from clrs.decisions import DecisionLog
-from clrs.machine import Machine
+from clrs.common.decisions import DecisionLog
+from clrs.vm.machine import Machine
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 RUNNING = {"run", "call", "branch", "compare", "attribute", "fault"}

@@ -1,15 +1,15 @@
 import unittest
 from pathlib import Path
 
-from clrs.errors import BACKTICK_MESSAGE
-from clrs.errors import CompileError
-from clrs.errors import JUMP_MESSAGE
-from clrs.errors import ONE_SPACE_MESSAGE
-from clrs.errors import SPACE_MIX_MESSAGE
-from clrs.errors import TAB_MIX_MESSAGE
-from clrs.lexer import Lexer
-from clrs.tokens import Token
-from clrs.tokens import TokenKind as K
+from clrs.common.errors import BACKTICK_MESSAGE
+from clrs.common.errors import CompileError
+from clrs.common.errors import JUMP_MESSAGE
+from clrs.common.errors import ONE_SPACE_MESSAGE
+from clrs.common.errors import SPACE_MIX_MESSAGE
+from clrs.common.errors import TAB_MIX_MESSAGE
+from clrs.front.lexer import Lexer
+from clrs.front.tokens import Token
+from clrs.front.tokens import TokenKind as K
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 

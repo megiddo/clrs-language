@@ -7,7 +7,7 @@ from pathlib import Path
 
 from clrs.bytecode import COMPARISON_NAMES
 from clrs.bytecode import Opcode
-from clrs.loader import DIRECTIVES
+from clrs.bytecode.loader import DIRECTIVES
 
 VSCODE = Path(__file__).resolve().parents[1] / "editors" / "vscode"
 

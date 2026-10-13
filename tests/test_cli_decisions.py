@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from clrs.cli import RunCommand
-from clrs.decisions import DecisionLog
+from clrs.common.decisions import DecisionLog
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 KINDS = {"cli", "print"}

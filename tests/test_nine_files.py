@@ -7,7 +7,7 @@ from clrs import CompileError
 from clrs import Engine
 from clrs import RuntimeFault
 from clrs.bytecode import IntegerConstant
-from clrs.values import ClrsArray
+from clrs.vm.values import ClrsArray
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 UNSORTED = "[5, 2, 4, 6, 1, 3]"

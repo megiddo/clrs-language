@@ -5,9 +5,9 @@ import unittest
 
 from clrs import Engine
 from clrs import RuntimeFault
-from clrs.values import INFINITY
-from clrs.values import NIL
-from clrs.values import ClrsArray
+from clrs.vm.values import INFINITY
+from clrs.vm.values import NIL
+from clrs.vm.values import ClrsArray
 
 PROCEDURES = """Module Clrs.Test
 
