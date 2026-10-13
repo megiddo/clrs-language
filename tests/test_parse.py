@@ -11,6 +11,7 @@ from clrs.common.errors import CHAIN_MESSAGE
 from clrs.common.errors import FLOOR_MESSAGE
 from clrs.common.errors import FOR_DIRECTION_MESSAGE
 from clrs.common.errors import FOR_END_MESSAGE
+from clrs.common.errors import IMPORT_MESSAGE
 from clrs.common.errors import LENGTH_MESSAGE
 from clrs.common.errors import OR_MESSAGE
 from clrs.common.errors import SLASH_MESSAGE
@@ -472,13 +473,35 @@ class DriverTest(CompileErrorCase):
         self.assertDriverError("x; 2", "Expected a statement but found ';'.", 1, 2)
 
 
+class ImportTest(CompileErrorCase):
+    def test_imports_follow_the_module_line(self) -> None:
+        module = parse_module("Module demo\nimport Clrs.Sorting\nimport Heap\nP()\n\treturn 1\n")
+        self.assertEqual(shape(module.imports), (("Import", "Clrs.Sorting"), ("Import", "Heap")))
+        self.assertEqual([(i.line, i.column) for i in module.imports], [(2, 1), (3, 1)])
+        self.assertEqual(shape(module.definitions), (("Procedure", "P", (), (("Return", I(1)),)),))
+
+    def test_a_module_without_imports_has_none(self) -> None:
+        self.assertEqual(parse_module("Module M\nP()\n\treturn 1\n").imports, ())
+
+    def test_import_after_a_definition_is_rejected(self) -> None:
+        source = "Module M\nP()\n\treturn 1\nimport Clrs.Sorting\n"
+        self.assertModuleError(source, IMPORT_MESSAGE, 4, 1)
+
+    def test_import_path_is_dotted_names_only(self) -> None:
+        self.assertModuleError('Module M\nimport "lib"\n', "Unexpected character '\"'.", 2, 8)
+        self.assertModuleError("Module M\nimport Clrs.\n", "Expected name but found 'import Clrs.'.", 2, 13)
+
+    def test_import_is_a_keyword(self) -> None:
+        self.assertDriverError("import", "Expected an expression but found 'import'.", 1, 1)
+
+
 class NodeTest(unittest.TestCase):
     def test_every_node_is_frozen_and_dispatches_to_its_own_visit(self) -> None:
         nodes = [
             obj for obj in vars(ast).values()
             if isinstance(obj, type) and dataclasses.is_dataclass(obj)
         ]
-        self.assertEqual(len(nodes), 28)
+        self.assertEqual(len(nodes), 29)
 
         class Recorder:
             def __getattr__(self, name: str) -> object:

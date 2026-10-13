@@ -10,9 +10,10 @@ from clrs.common.errors import CompileError
 from clrs.common.errors import LinkError
 from clrs.common.errors import LoadError
 from clrs.common.errors import RuntimeFault
+from clrs.common.errors import SourceFault
 from clrs.cli.printer import ValuePrinter
 
-RUN_USAGE = "usage: python -m clrs run <files...> -- <driver>"
+RUN_USAGE = "usage: python -m clrs run [<entry.clrs> [files...]] -- <driver>"
 USAGE = RUN_USAGE
 
 FAULTS: dict[type[Exception], tuple[str, str]] = {
@@ -53,6 +54,26 @@ class Stage:
         self.action = action
 
 
+STAGE_FAULTS = (OSError, SourceFault, *FAULTS)
+
+
+def file_stages(files: tuple[str, ...], engine: Engine) -> list[Stage]:
+    """The first file is the entry and pulls in its imports; later files are loaded one by one."""
+    entry = [Stage(path, lambda path=path: engine.load_entry(path)) for path in files[:1]]
+    extras = [Stage(path, lambda path=path: engine.load_extra(path)) for path in files[1:]]
+    return entry + extras
+
+
+def describe(label: str, error: Exception) -> tuple[str, str]:
+    """Return the decision outcome and the stderr line for a fault raised by a stage."""
+    if isinstance(error, SourceFault):
+        return describe(error.path, error.cause)
+    if isinstance(error, OSError):
+        return "file", f"{label}: cannot read: {error.strerror}"
+    outcome, title = FAULTS[type(error)]
+    return outcome, f"{label}: {title}: {error}"
+
+
 class RunCommand:
     """Pattern: Command. Runs the stages in order and turns the first fault into exit 1."""
 
@@ -72,17 +93,14 @@ class RunCommand:
         return self._stages(invocation, Engine())
 
     def _stages(self, invocation: Invocation, engine: Engine) -> int:
-        stages = [Stage(path, lambda path=path: engine.load_file(path)) for path in invocation.files]
+        stages = file_stages(invocation.files, engine)
         stages.append(Stage("driver", lambda: engine.run(invocation.driver)))
         result: object = None
         for stage in stages:
             try:
                 result = stage.action()
-            except OSError as error:
-                return self._fail("file", f"{stage.label}: cannot read: {error.strerror}")
-            except tuple(FAULTS) as error:
-                outcome, title = FAULTS[type(error)]
-                return self._fail(outcome, f"{stage.label}: {title}: {error}")
+            except STAGE_FAULTS as error:
+                return self._fail(*describe(stage.label, error))
         self._out.write(ValuePrinter(self._log).render(result) + "\n")
         return 0
 

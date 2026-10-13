@@ -45,12 +45,18 @@ clrs/
     machine.py         Command dispatch
 
   run/                 Files on disk
+    manifest.py        Find and read clrs.mod
+    imports.py         Import graph → dependency-first load plan
     modules.py         Merge Clrs.Sorting modules
+    linker.py          CALL arity against .param
     engine.py          Lex → parse → compile → load → run
 
   cli/
     command.py         `clrs run`
+    compile_command.py `clrs compile`
     printer.py         Driver result formatting
+
+clrs.mod               Workspace manifest: dotted module path → directory
 
 clrs_lint/             Transcription linter (structure only)
 editors/vscode/        .clrs and .clrsa highlighting + alias rewrite

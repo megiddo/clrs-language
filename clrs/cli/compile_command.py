@@ -1,19 +1,17 @@
 """Pattern: Command. `clrs compile` lowers modules to .clrsa text without executing them."""
 
-import sys
 from pathlib import Path
 from typing import TextIO
 
 from clrs.common.decisions import DecisionLog
-from clrs.common.errors import CompileError
-from clrs.common.errors import LinkError
-from clrs.common.errors import LoadError
 from clrs.run.engine import Engine
-from clrs.cli.command import FAULTS
+from clrs.cli.command import STAGE_FAULTS
 from clrs.cli.command import Stage
 from clrs.cli.command import UsageError
+from clrs.cli.command import describe
+from clrs.cli.command import file_stages
 
-COMPILE_USAGE = "usage: python -m clrs compile <files...> [-o file.clrsa] [-- <driver>]"
+COMPILE_USAGE = "usage: python -m clrs compile <entry.clrs> [files...] [-o file.clrsa] [-- <driver>]"
 
 
 class CompileInvocation:
@@ -78,17 +76,14 @@ class CompileCommand:
             return 2
         self._log.record("cli", "compile")
         engine = Engine()
-        stages = [Stage(path, lambda path=path: engine.load_file(path)) for path in invocation.files]
+        stages = file_stages(invocation.files, engine)
         if invocation.driver is not None:
             stages.append(Stage("driver", lambda: engine.compile_driver(invocation.driver)))
         for stage in stages:
             try:
                 stage.action()
-            except OSError as error:
-                return self._fail("file", f"{stage.label}: cannot read: {error.strerror}")
-            except tuple(FAULTS) as error:
-                outcome, title = FAULTS[type(error)]
-                return self._fail(outcome, f"{stage.label}: {title}: {error}")
+            except STAGE_FAULTS as error:
+                return self._fail(*describe(stage.label, error))
         text = engine.compiled_text()
         if invocation.output is None:
             self._out.write(text)

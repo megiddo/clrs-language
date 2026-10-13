@@ -112,3 +112,30 @@ rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests exampl
 (cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
 python3 -m clrs compile examples/insertion-sort.clrs
 ```
+
+## M7 — Workspace manifest and structured imports
+
+- Branch: `clrs/m07-imports`, from `33c5fe0` (the M6 tip on `clrs/m06-param-slots`).
+- Why: an entry file can now name the modules it needs with `import Clrs.Sorting`, and `clrs run` / `clrs compile` find their files through a `clrs.mod` manifest instead of a hand-written file list.
+- Manifest (`clrs/run/manifest.py`, Pattern: Factory Method with a Null Object): `clrs.mod` is TOML with `module = "…"` and a `[paths]` table from dotted module paths to directories relative to the manifest. It is found by walking up from the entry file's directory. Invalid TOML, a missing or non-string `module`, a `paths` that is not a table, a key that is not dotted identifiers, or a non-string directory is a `CompileError` at 1:1 of `clrs.mod`. With no manifest, an entry without imports still runs; any import is a compile error at the import line. The repo root now has `clrs.mod` mapping `"Clrs.Sorting" = "examples"`.
+- Syntax (`clrs/front/parser.py`, `ast.py`, `lexer.py`): `import` is a keyword. `import A.B` lines come after `Module` and before the first definition and become `Import(path, line, column)` nodes in `Module.imports`. An import after a definition is rejected; a quoted path is not a token.
+- Graph (`clrs/run/imports.py`, Pattern: Builder): depth first from the entry. Each imported path must be a `[paths]` key (`unknown module Clrs.Foo (not in clrs.mod of clrs.io/local).`); its directory must hold `*.clrs` files; every one is parsed and must declare `Module` equal to the key. The entry is checked the same way when its own directory is mapped, but it loads alone, without its siblings. A path already on the walk stack is a cycle (`Import cycle: Clrs.Sorting → Clrs.Heap → Clrs.Sorting.`). A diamond loads the shared module once. The plan lists dependencies first and the entry last.
+- Shadowing: a module's top-level definitions hide same-named definitions in any module it imports, directly or transitively. Calls stay unqualified and the link table stays flat, so the hidden definitions are dropped before compiling and `clrs compile` never writes two blocks of one name. Two modules with no import path between them that define one name remain a `LinkError`.
+- Faults: `SourceFault` (Pattern: Decorator) names the file behind a compile, load, link, or read failure anywhere in the graph. The CLI prints `<that file>: compile error: …` for it, so a header mismatch in a dependency is reported against the dependency.
+- CLI: the first file of `run` and `compile` is the entry and pulls in its imports (`Engine.load_entry`); later files are loaded one by one as before (`Engine.load_extra`), skipping any the graph already loaded as a dependency. Listing the entry twice is still a link error. `Engine.of` and `load_file` ignore imports, so the nine-file tests are unchanged and green.
+- Linear search: importing `Clrs.Sorting` from the repo manifest still fails at `examples/linear-search.clrs` line 5; imports do not skip or repair it.
+- Editor: `clrs.tmLanguage.json` highlights `import` and the dotted path after it.
+- Tests: `tests/test_imports.py` (nested entry, a mapped directory merging several files, transitive imports, diamond, no manifest, entry in a mapped directory, unknown import in the entry and in a dependency, header mismatch of a dependency and of the entry, cycle, self-import, empty directory, parse and compile errors in a dependency, unreadable entry and manifest, every manifest fault, local and transitive shadowing, unrelated duplicates, the repo manifest, linear search through an import, `run` and `compile` through the graph, a listed dependency skipped, extra files, and a `python -m clrs run` subprocess from inside a workspace); `ImportTest` in `tests/test_parse.py`; `ClrsGrammarTest` in `tests/test_clrsa_grammar.py`. 342 tests in all.
+- Coverage: 2744 of 2756 statements in `clrs/` (99%). The new and changed modules (`manifest.py`, `imports.py`, `engine.py`, `parser.py`) are at 100%; the 12 missed lines are the pre-existing `main` dispatch and compile usage branches.
+- Mutmut 3.8: 4118 killed, 11 timed out, 49 survived, of 4178. Killed is 98.6%. No survivor is in a module added or changed by M7 apart from the untouched `main` dispatcher in `command.py`. The two new timeouts in `ModuleBuilder.parse` replace a parsed import or definition with `None`, which never advances the cursor.
+- Decision logs tested in `tests/test_import_decisions.py`, records only: `parse import`, `import manifest`, `import standalone`, `import module`, `import seen`, `module shadow`, `module skip`, and `reject` with `import`, `manifest`, `header`, `cycle`. `tests/test_cli_decisions.py` also asserts `cli file` from `compile`.
+- `setup.cfg` copies `clrs.mod` into the mutmut sandbox because a test reads the repo manifest.
+
+Commands:
+
+```sh
+python3 -m unittest discover -s tests
+python3 -m coverage run --source=clrs -m unittest discover -s tests && python3 -m coverage report -m
+rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests examples lang editors setup.cfg clrs.mod /tmp/clrs-mut/
+(cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
+```

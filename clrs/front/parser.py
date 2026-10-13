@@ -3,12 +3,14 @@
 from clrs.front.ast import AttributeDefault
 from clrs.front.ast import Datatype
 from clrs.front.ast import Driver
+from clrs.front.ast import Import
 from clrs.front.ast import Method
 from clrs.front.ast import Module
 from clrs.front.ast import Procedure
 from clrs.front.cursor import TokenCursor
 from clrs.common.decisions import DecisionLog
 from clrs.common.errors import CompileError
+from clrs.common.errors import IMPORT_MESSAGE
 from clrs.common.errors import LENGTH_MESSAGE
 from clrs.front.expressions import ExpressionBuilder
 from clrs.front.lexer import Lexer
@@ -31,10 +33,20 @@ class ModuleBuilder:
         token = self._cursor.expect(TokenKind.MODULE)
         name = self._dotted()
         self._cursor.expect(TokenKind.NEWLINE)
+        imports: list[Import] = []
+        while self._cursor.check(TokenKind.IMPORT):
+            imports.append(self._import())
         definitions: list[object] = []
         while not self._cursor.check(TokenKind.EOF):
             definitions.append(self._definition())
-        return Module(name, tuple(definitions), token.line, token.column)
+        return Module(name, tuple(definitions), token.line, token.column, tuple(imports))
+
+    def _import(self) -> Import:
+        token = self._cursor.advance()
+        self._log.record("parse", "import")
+        path = self._dotted()
+        self._cursor.expect(TokenKind.NEWLINE)
+        return Import(path, token.line, token.column)
 
     def _dotted(self) -> str:
         name = self._cursor.expect(TokenKind.NAME)
@@ -50,6 +62,8 @@ class ModuleBuilder:
         if self._cursor.check(TokenKind.NAME):
             return self._procedure()
         token = self._cursor.peek()
+        if token.kind is TokenKind.IMPORT:
+            self._log.reject("import", IMPORT_MESSAGE, token.line, token.column)
         raise CompileError(
             f"Expected a definition but found {token.text!r}.",
             token.line,

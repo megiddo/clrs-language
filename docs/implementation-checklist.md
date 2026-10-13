@@ -65,7 +65,8 @@ Do not repair legal transcriptions inside the compiler. `examples/linear-search.
 
 ### M7 — Workspace manifest + structured imports
 
-- [ ] Branch `clrs/m07-imports` from M6 tip.
+- [x] Branch `clrs/m07-imports` from M6 tip.
+- Chosen rules: the entry file loads alone (not its directory siblings); only imports pull in whole mapped directories. Shadowing is transitive: a module's definitions hide same-named top-level definitions of any module it imports directly or transitively, and the hidden ones are dropped before they compile, so linking stays flat. Two modules with no import path between them that define the same name are a `LinkError`. Later CLI files load one by one after the graph; one the graph already loaded as a dependency is skipped. `Engine.load_file` / `Engine.of` still ignore imports.
 - **`clrs.mod`** at workspace root (TOML): `module = "…"` and `[paths]` mapping dotted module paths to directories relative to manifest.
 - **Import syntax:** after `Module` line, before definitions: `import Clrs.Sorting` (dotted identifiers only — no string paths).
 - Find manifest by walking upward from entry file (like `go.mod`).

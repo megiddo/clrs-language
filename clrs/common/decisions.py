@@ -18,7 +18,7 @@ class DecisionLog:
     def record(self, decision: str, outcome: str) -> None:
         self._logger.info("%s %s", decision, outcome)
 
-    def reject(self, outcome: str, message: str, line: int, column: int) -> None:
+    def reject(self, outcome: str, message: str, line: int, column: int) -> NoReturn:
         self.record("reject", outcome)
         raise CompileError(message, line, column)
 

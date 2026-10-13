@@ -18,6 +18,7 @@ class TokenKind(enum.Enum):
     NAME = "name"
     NUMBER = "number"
     MODULE = "Module"
+    IMPORT = "import"
     DATATYPE = "datatype"
     EXTENDS = "extends"
     FOR = "for"

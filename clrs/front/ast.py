@@ -4,6 +4,18 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class Import:
+    """Pattern: Value Object. One `import Clrs.Sorting` line naming a module by its dotted path."""
+
+    path: str
+    line: int
+    column: int
+
+    def accept(self, visitor: object) -> object:
+        return visitor.visit_import(self)
+
+
+@dataclass(frozen=True)
 class Module:
     """Pattern: Value Object. A module file that does not run on its own."""
 
@@ -11,6 +23,7 @@ class Module:
     definitions: tuple[object, ...]
     line: int
     column: int
+    imports: tuple[Import, ...] = ()
 
     def accept(self, visitor: object) -> object:
         return visitor.visit_module(self)

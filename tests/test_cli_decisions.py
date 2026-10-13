@@ -38,6 +38,14 @@ class CliDecisionLogTest(unittest.TestCase):
         outcomes = [record.getMessage() for record in captured.records]
         self.assertIn("cli compile", outcomes)
 
+    def test_compile_records_the_fault_outcome(self) -> None:
+        missing = str(EXAMPLES / "missing.clrs")
+        command = CompileCommand(io.StringIO(), io.StringIO(), DecisionLog())
+        with self.assertLogs("clrs", level="INFO") as captured:
+            command.execute(["compile", missing])
+        outcomes = [record.getMessage() for record in captured.records]
+        self.assertEqual([m for m in outcomes if m.startswith("cli ")], ["cli compile", "cli file"])
+
     def test_scalar_renderings(self) -> None:
         cases = {
             "1": ["print integer"],

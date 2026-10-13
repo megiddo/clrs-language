@@ -15,4 +15,13 @@ python3 -m clrs compile examples/insertion-sort.clrs -o build/insertion-sort.clr
 python3 -m clrs compile examples/heap.clrs examples/heapsort.clrs -o build/heapsort.clrsa
 ```
 
+An entry file can `import Clrs.Sorting` after its `Module` line instead of listing files. The nearest `clrs.mod` above the entry maps each dotted module path to a directory; every `*.clrs` there is loaded:
+
+```toml
+module = "clrs.io/local"
+
+[paths]
+"Clrs.Sorting" = "examples"
+```
+
 Package layout: [docs/project-layout.md](docs/project-layout.md). Import and packed-executable plans: [docs/planning/module-import-and-pack.md](docs/planning/module-import-and-pack.md). Milestones and gates: [docs/milestones.md](docs/milestones.md).

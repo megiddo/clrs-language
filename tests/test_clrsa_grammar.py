@@ -59,5 +59,16 @@ class ClrsaGrammarTest(unittest.TestCase):
         self.assertIn(".param", DIRECTIVES)
 
 
+class ClrsGrammarTest(unittest.TestCase):
+    def test_import_highlights_the_keyword_and_the_dotted_path(self) -> None:
+        grammar = json.loads((VSCODE / "syntaxes" / "clrs.tmLanguage.json").read_text())
+        self.assertIn({"include": "#import"}, grammar["patterns"])
+        pattern = re.compile(grammar["repository"]["import"]["match"])
+        match = pattern.match("import Clrs.Sorting")
+        self.assertEqual((match.group(1), match.group(2)), ("import", "Clrs.Sorting"))
+        self.assertIsNone(pattern.match('import "lib/sorting"'))
+        self.assertIsNone(pattern.match("imports Clrs"))
+
+
 if __name__ == "__main__":
     unittest.main()

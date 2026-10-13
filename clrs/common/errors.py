@@ -21,6 +21,7 @@ BACKTICK_MESSAGE = (
 TARGET_MESSAGE = "This value cannot be assigned."
 BLOCK_INTRO = "which does not open a block."
 DEFAULT_MESSAGE = "A datatype default must be a literal."
+IMPORT_MESSAGE = "An import must come after the Module line and before the first definition."
 
 
 class CompileError(Exception):
@@ -56,3 +57,12 @@ class LinkError(Exception):
     def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(message)
+
+
+class SourceFault(Exception):
+    """Pattern: Decorator. Names the file behind a compile, load, link, or read failure in an import graph."""
+
+    def __init__(self, path: str, cause: Exception) -> None:
+        self.path = path
+        self.cause = cause
+        super().__init__(f"{path}: {cause}")
