@@ -1,110 +1,93 @@
 # CLRS interpreter checklist
 
-Source of truth for the stacked milestones. Implement one unchecked milestone, then stop. The bytecode is plain text (`.clrsa`), not a binary encoding.
+Source of truth for stacked milestones. Implement **one unchecked milestone**, then stop. Bytecode is plain text (`.clrsa`), not binary.
 
-Stack base: `master`. Each branch stacks on the previous milestone tip.
+**Phase 1** (M1–M4): complete on branches `clrs/m01-lex-parse` … `clrs/m04-cli`.
 
-This is Python 3.12, not a Slim app. The mutation gate is `mutmut` at 80% killed on `clrs/`. The coverage gate is 95% line coverage of `clrs/`. Do not install PHP, Infection, or a database. Decision logging uses the standard library `logging` logger named `clrs`.
+**Phase 2** (M5–M8): stack each branch on the previous milestone tip. Current stack tip: `clrs/m05-plan-stack` after M5 and this checklist land.
 
-## Locked language
+Read also: [docs/planning/module-import-and-pack.md](planning/module-import-and-pack.md).
 
-- Book glyphs and ASCII aliases are the same tokens. Longest alias wins: `<->` before `<-`, `|>` before `|.`, `.Inf`, `<=`, `>=`, `!=`, `|.`, `.|`, `|^`, `^|`. `^` is a caret, never a backtick.
-- `▷` and `|>` comment to end of line and emit no token. A comment-only line does not change the indent stack.
-- First indented code or comment line fixes the unit: one tab, or two spaces. A mix, a one-space indent, or a jump of more than one level is a compile error.
-- Arrays are 1-based. `[n_1 + 1]` and `[5]` allocate that many nil slots. `[5, 2, 4, 6, 1, 3]` is a literal. `[5,]` is a one-element literal. `[]` is an empty literal.
-- `length[A]` is the structural length. `contains[A]` is an attribute once a datatype default declares `contains`. A local shadows an attribute. `length` cannot be shadowed or stored.
-- `left[A, i]` is a call because of the comma. `A[i]` is an index because `A` is a local. `Name[single]` is never a call.
-- `and` binds looser than comparison and short-circuits. `i > 0 and A[i] > key` is `(i > 0) and (A[i] > key)`.
-- `+` and `-` are left-associative and looser than `*`. `q - p + 1` is `(q - p) + 1`. `i + 1 * 2` is `i + (1 * 2)`. Comparisons do not chain.
-- `/` is legal only as the operator directly inside `⌊ ⌋`. `⌊(p + r)/2⌋` is floor-division. Ceiling, `or`, and a bare floor of a non-division are rejected.
-- `for` initializes once, retests the end expression every iteration, steps after the body, and the variable survives. Missing `to`/`downto`, or a missing end expression, is a compile error.
-- Only a header opens a suite: `for`, `while`, `if`, `else`, `datatype`, a procedure, a method. An assignment does not.
-- Arrays pass as pointers. Rebinding a parameter is local. Element and attribute writes are shared. Scalars are immutable values.
-- `nil` is not an integer. Comparing nil is a runtime fault. `∞` is greater than every integer and equal to itself.
-- A module file does not run. A driver is `statement; statement; expression`.
+This is Python 3.12. Gates: `mutmut` ≥ 80% killed on `clrs/`; line coverage of `clrs/` ≥ 95%. Logger `clrs`, info `decision outcome`, separate log-only tests.
 
-## The nine files
+## Locked language (unchanged)
 
-`examples/mergesort.clrs` is indented legally: the three calls are siblings of `q ← …` inside the `if`. `examples/linear-search.clrs` is `for i ← length[A] to` with no end expression and does not compile.
+Book glyphs and ASCII aliases; 1-based arrays; pointer semantics; nine-file contract in phase 1 table — still green after every milestone.
 
-| File | Behavior |
-|---|---|
-| `insertion-sort.clrs` | `[5, 2, 4, 6, 1, 3]` becomes `[1, 2, 3, 4, 5, 6]` |
-| `bubblesort.clrs` | same input, same result |
-| `merge.clrs` | compiles; a real range raises on comparison with nil |
-| `mergesort.clrs` | `MergeSort(A, 1, 1)` leaves a one-element array unchanged; a wider range, with `merge.clrs` loaded, raises on nil |
-| `linear-search.clrs` | compile error on line 5 |
-| `heap.clrs` | `left[A, 1]` is 3 and `right[A, 1]` is 4 |
-| heap family | input `[4, 1, 3, 2, 16, 9, 10, 14, 8, 7]` finishes as `[16, 1, 2, 3, 9, 4, 7, 8, 10, 14]` and `contains[A]` is 1 |
+Do not repair legal transcriptions inside the compiler. `examples/linear-search.clrs` remains a compile error until the example is fixed.
 
-Do not repair a legal transcription inside the compiler. Do not revert the example edits.
+## Design bar (unchanged)
 
-## Textual bytecode (`.clrsa`)
-
-The compiler's output is text. The loader reads that text. Comments start with `▷`. Labels are names. The loader resolves them.
-
-```
-.proc InsertionSort
-.local A
-.local j
-▷ for j ← 2 to length[A]
-CONST 2
-STORE j
-L_for:
-LOAD j
-LOAD A
-LOAD_ATTR length
-CMP le
-JUMP_IF_FALSE L_for_end
-RET
-.end
-```
-
-Directives: `.proc Name`, `.local Name` in slot order, `.end`. Opcodes: `CONST`, `LOAD`, `STORE`, `LOAD_IDX`, `STORE_IDX`, `LOAD_ATTR`, `STORE_ATTR`, `ADD`, `SUB`, `MUL`, `FLOORDIV`, `CMP`, `JUMP`, `JUMP_IF_FALSE`, `CALL`, `RET`, `ALLOC`, `PACK`, `POP`. `CONST` operands include integers, `True`, `False`, `NIL`, `∞`. `CALL Name arity`. `CMP` takes `lt`, `gt`, `le`, `ge`, `eq`, or `ne`.
-
-## Design bar
-
-- Every module and every class docstring starts with `Pattern:` and names a pattern the type actually uses: Facade, Builder, Visitor, Strategy, Value Object, Command, Null Object, Factory, Iterator, Repository, Observer, Template Method, Entity, or Enumeration.
-- No `Optional` in a signature. No test fake standing in for the lexer, parser, compiler, or machine. The nine-file tests run the real pipeline.
-- Methods stay under 80 lines. Classes stay under 500.
-- Tests assert meaning: associativity, short-circuit, alloc versus literal, pointer versus rebind, loop-variable survival, floor of a negative quotient, nil, infinity. A test that only asserts a constructor stored its argument is not enough.
-- Decision branches log `decision outcome` at info on logger `clrs`. A separate test asserts those records and does not also assert the user-visible result.
+`Pattern:` on every class/module. No `Optional` in signatures. No lexer/parser/VM fakes in nine-file tests. Methods &lt; 80 lines, classes &lt; 500.
 
 ## Gates, every milestone
 
-1. `python3 -m unittest discover -s tests` with no filter. Existing linter tests stay green.
-2. Line coverage of `clrs/` at or above 95%. `coverage` 7.15 is installed.
-3. `mutmut` killed at or above 80% on `clrs/`. Install `mutmut` if it is missing. Do not lower the gate. Record killed, surviving, and the percentage.
-4. Append a section to `docs/milestones.md`: branch, why, coverage fraction, mutmut score, and which decision logs were tested.
-5. Exactly one commit. Do not push. Do not change git config. Do not commit `.idea/` or `build/`. Do not stage `lang/preprocessor_001.sh` or `lang/tokenizer.php`; their diffs are empty. Do stage the example edits.
+1. `python3 -m unittest discover -s tests` (no filter).
+2. Line coverage of `clrs/` ≥ 95%.
+3. `mutmut` on `clrs/` ≥ 80% killed (run on `/tmp` copy if Google Drive — see `docs/milestones.md`).
+4. Append `docs/milestones.md`.
+5. One commit. Do not push. Do not commit `.idea/`, `build/`, or empty-diff `lang/*.php` / `lang/*.sh`.
 
-## Milestones
+---
 
-### M1 — Lex and parse
+## Phase 1 (done)
 
-- [x] Branch `clrs/m01-lex-parse` from `master`.
-- Lexer, indent strategy, alias table, parser, AST, compile errors, decision log.
-- AST nodes are frozen value objects with `accept` so a later visitor does not rewrite them. Parse both module files and drivers.
-- Commit the example edits, `clrs_lint/`, `editors/vscode/`, and `tests/test_lint.py` so the transcription tools are not left untracked. Mutation and coverage gates apply to `clrs/` only.
-- Do not compile, assemble, or execute.
+| Milestone | Branch | Done |
+|---|---|---|
+| M1 Lex + parse | `clrs/m01-lex-parse` | [x] |
+| M2 Text `.clrsa` | `clrs/m02-text-bytecode` | [x] |
+| M3 Machine | `clrs/m03-machine` | [x] |
+| M4 CLI `run` | `clrs/m04-cli` | [x] |
 
-### M2 — Textual bytecode
+---
 
-- [x] Branch `clrs/m02-text-bytecode` from the M1 tip.
-- A visitor lowers the AST to `.clrsa`. A loader reads `.clrsa` back into instructions and resolves labels. Round-trip the text.
-- Add a TextMate grammar for `.clrsa` on the existing extension: opcodes, labels, directives, `▷` comments.
-- Prove, in the text itself: `and` is two conditional jumps and the right operand is not before the first jump; a `for` re-reads its end expression on each test; `[n_1 + 1]` is `ALLOC`; `[5, 2, 4, 6, 1, 3]` is `CONST`s then `PACK 6`; an exchange evaluates each address expression once.
-- Do not run the nine algorithms yet.
+## Phase 2
 
-### M3 — Machine
+### M5 — Compile-only CLI
 
-- [x] Branch `clrs/m03-machine` from the M2 tip.
-- Values, array entity, command-per-opcode, explicit frame stack. Facade `Engine` loads real files and runs a driver through lex, parse, textual bytecode, load, and execute.
-- The nine-file table above is green, through that facade, with no fakes.
-- Also lock: parameter rebind is invisible to the caller; element write is visible; `i > 0 and A[i] > key` does not read index 0; `⌊-3/2⌋` is `-2`; `∞` compares above every int; a loop variable survives; `contains` is absent on a fresh array until written; `Heap` records default `contains = 0` and does not apply it.
+- [x] Branch stacked on `clrs/m04-cli` layout commit (`cb6bd89`) or same line.
+- `python3 -m clrs compile <files...> [-o file.clrsa] [-- <driver>]`
+- Writes merged module `.clrsa` to `-o` or stdout; optional driver block appended like `run`.
+- `CompileCommand`, `Engine.compiled_text()` / `ModuleRepository.bundle()`.
+- Tests in `tests/test_cli.py` and decision log for `cli compile`.
 
-### M4 — CLI
+### M6 — Parameter slots in `.clrsa`
 
-- [x] Branch `clrs/m04-cli` from the M3 tip.
-- `python -m clrs run <files> -- <driver>` prints the last expression. Integers in decimal. `True`, `False`, `NIL`, `∞`. Arrays as `[v1, v2, …]`, length 1 as `[v,]`, length 0 as `[]`.
-- One test runs insertion sort through the command line and expects `[1, 2, 3, 4, 5, 6]`. Compile and runtime faults print to stderr and exit 1.
+- [ ] Branch `clrs/m06-param-slots` from phase-2 tip.
+- Add `.param Name` directives after `.local` block (or interleaved: all `.param` then `.local` temps — pick one, document in checklist when done). Parameters are the first N slots; `.local` lists only non-parameter locals including temps.
+- Compiler emits `.param` for each procedure/method parameter in order.
+- Loader: `CALL` arity must match parameter count; too few or too many arguments is **LinkError** at load or link time (choose one layer, test both paths if split).
+- Update `.clrsa` TextMate grammar and `tests/test_clrsa_grammar.py`.
+- Refresh bytecode snapshot tests; nine-file table still green.
+- Document the known M3 gap closure in `docs/milestones.md`.
+
+### M7 — Workspace manifest + structured imports
+
+- [ ] Branch `clrs/m07-imports` from M6 tip.
+- **`clrs.mod`** at workspace root (TOML): `module = "…"` and `[paths]` mapping dotted module paths to directories relative to manifest.
+- **Import syntax:** after `Module` line, before definitions: `import Clrs.Sorting` (dotted identifiers only — no string paths).
+- Find manifest by walking upward from entry file (like `go.mod`).
+- Every `*.clrs` in a mapped directory must declare the same `Module` path as the manifest key; else compile error.
+- Transitive imports, cycle detection, topological compile. Unqualified calls; locals shadow imports; duplicate defs → link error.
+- **`clrs run entry.clrs -- driver`** resolves imports without listing dependency files on CLI (extra CLI files remain optional override for dev).
+- **`clrs compile entry.clrs -o out.clrsa`** uses the same graph.
+- Add repo `clrs.mod` mapping `"Clrs.Sorting" = "examples"` (or split `lib/sorting` later); tests: nested entry path, unknown import, header mismatch, cycle, shadowing.
+- Parser: `Import` AST node; extend vscode grammar for `import`.
+- Linear search example still compile-errors until fixed; do not “fix” via import magic.
+
+### M8 — Packed executable `.clrsa`
+
+- [ ] Branch `clrs/m08-pack-run` from M7 tip.
+- Packed format (text): leading `▷ clrsa 1`, optional repeated `.module Name` sections, existing blocks, plus **`.entry <name>`** before the entry routine (`.proc` name or `.driver`).
+- **`clrs pack <entry.clrs> -- <driver> -o app.clrsa [--entry main]`** — resolve imports (M7), link, write header + `.entry`. Default entry name `main` when a driver is supplied.
+- **`clrs run app.clrsa`** — if single argument is a packed file with `.entry`, load and execute entry (no `-- driver`). `.clrsa` without `.entry` behaves as today (library blob) or errors clearly.
+- Loader/Program: `entry: str | None`, `format_version: int`.
+- `Engine.run_entry(program)` or equivalent.
+- Tests: pack → run insertion sort; missing entry; duplicate `.entry`; subprocess `clrs run app.clrsa`.
+- **`clrs compile`** unchanged (library output, no required entry).
+
+---
+
+## Orchestrator order
+
+M6 → M7 → M8 serially. Each worker reads this file and [module-import-and-pack.md](planning/module-import-and-pack.md).
