@@ -35,7 +35,9 @@ class Engine:
         self._modules.merge(module.name, text, Loader().load(text))
 
     def compile_driver(self, source: str) -> str:
-        return Compiler(source, self._log).compile(Parser().parse_driver(source))
+        text = Compiler(source, self._log).compile(Parser().parse_driver(source))
+        self._modules.remember_driver(text)
+        return text
 
     def run(self, source: str) -> object:
         program = Loader().load(self.compile_driver(source))
@@ -44,6 +46,10 @@ class Engine:
 
     def listing(self, module: str) -> str:
         return self._modules.listing(module)
+
+    def compiled_text(self) -> str:
+        """Return merged module bytecode and any driver block compiled on this engine."""
+        return self._modules.bundle()
 
     def modules(self) -> tuple[str, ...]:
         return self._modules.modules()

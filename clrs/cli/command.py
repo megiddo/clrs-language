@@ -1,4 +1,4 @@
-"""Pattern: Command. `clrs run <files> -- <driver>` loads modules, runs a driver, and prints it."""
+"""Pattern: Command. `clrs run` executes drivers; `clrs compile` writes .clrsa without running."""
 
 import sys
 from collections.abc import Callable
@@ -12,7 +12,8 @@ from clrs.common.errors import LoadError
 from clrs.common.errors import RuntimeFault
 from clrs.cli.printer import ValuePrinter
 
-USAGE = "usage: python -m clrs run <files...> -- <driver>"
+RUN_USAGE = "usage: python -m clrs run <files...> -- <driver>"
+USAGE = RUN_USAGE
 
 FAULTS: dict[type[Exception], tuple[str, str]] = {
     CompileError: ("compile", "compile error"),
@@ -36,11 +37,11 @@ class Invocation:
     @classmethod
     def parse(cls, argv: list[str]) -> "Invocation":
         if argv[:1] != ["run"] or "--" not in argv:
-            raise UsageError(USAGE)
+            raise UsageError(RUN_USAGE)
         split = argv.index("--")
         rest = argv[split + 1 :]
         if len(rest) != 1:
-            raise UsageError(USAGE)
+            raise UsageError(RUN_USAGE)
         return cls(tuple(argv[1:split]), rest[0])
 
 
@@ -92,4 +93,18 @@ class RunCommand:
 
 
 def main(argv: list[str]) -> int:
-    return RunCommand(sys.stdout, sys.stderr, DecisionLog()).execute(argv)
+    from clrs.cli.compile_command import COMPILE_USAGE
+    from clrs.cli.compile_command import CompileCommand
+
+    log = DecisionLog()
+    if not argv:
+        sys.stderr.write(RUN_USAGE + "\n" + COMPILE_USAGE + "\n")
+        log.record("cli", "usage")
+        return 2
+    if argv[0] == "run":
+        return RunCommand(sys.stdout, sys.stderr, log).execute(argv)
+    if argv[0] == "compile":
+        return CompileCommand(sys.stdout, sys.stderr, log).execute(argv)
+    sys.stderr.write(RUN_USAGE + "\n" + COMPILE_USAGE + "\n")
+    log.record("cli", "usage")
+    return 2

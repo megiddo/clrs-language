@@ -14,6 +14,7 @@ class ModuleRepository:
         self._listings: dict[str, list[str]] = {}
         self._routines: dict[str, Routine] = {}
         self._datatypes: dict[str, DatatypeRecord] = {}
+        self._driver_text: str | None = None
 
     def merge(self, module: str, text: str, program: Program) -> None:
         if module in self._listings:
@@ -53,3 +54,12 @@ class ModuleRepository:
 
     def modules(self) -> tuple[str, ...]:
         return tuple(self._listings)
+
+    def remember_driver(self, text: str) -> None:
+        self._driver_text = text
+
+    def bundle(self) -> str:
+        parts = [self.listing(name) for name in self.modules()]
+        if self._driver_text is not None:
+            parts.append(self._driver_text)
+        return "".join(parts)

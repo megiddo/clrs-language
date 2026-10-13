@@ -9,8 +9,10 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from clrs.cli import CompileCommand
+from clrs.cli import COMPILE_USAGE
 from clrs.cli import RunCommand
-from clrs.cli import USAGE
+from clrs.cli import RUN_USAGE
 from clrs.common.decisions import DecisionLog
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,7 +52,10 @@ class CommandLineProcessTest(unittest.TestCase):
 class CommandLineTest(unittest.TestCase):
     def run_cli(self, *argv: str) -> tuple[int, str, str]:
         out, err = io.StringIO(), io.StringIO()
-        status = RunCommand(out, err, DecisionLog()).execute(list(argv))
+        if argv and argv[0] == "compile":
+            status = CompileCommand(out, err, DecisionLog()).execute(list(argv))
+        else:
+            status = RunCommand(out, err, DecisionLog()).execute(list(argv))
         return status, out.getvalue(), err.getvalue()
 
     def printed(self, driver: str, *files: str) -> str:
@@ -136,7 +141,47 @@ class CommandLineTest(unittest.TestCase):
             ("run", "--", "1", "2"),
         ]
         for argv in cases:
-            self.assertEqual(self.run_cli(*argv), (2, "", USAGE + "\n"), argv)
+            self.assertEqual(self.run_cli(*argv), (2, "", RUN_USAGE + "\n"), argv)
+
+    def test_compile_writes_merged_module_to_stdout(self) -> None:
+        status, out, err = self.run_cli("compile", example("insertion-sort.clrs"))
+        self.assertEqual((status, err), (0, ""))
+        self.assertIn(".proc InsertionSort", out)
+        self.assertIn("CONST 2", out)
+
+    def test_compile_writes_to_output_file(self) -> None:
+        target = ROOT / "build" / "insertion-sort.clrsa"
+        target.parent.mkdir(exist_ok=True)
+        status, out, err = self.run_cli(
+            "compile",
+            example("insertion-sort.clrs"),
+            "-o",
+            str(target),
+        )
+        self.assertEqual((status, out, err), (0, "", ""))
+        self.assertIn(".proc InsertionSort", target.read_text(encoding="utf-8"))
+
+    def test_compile_heap_family_matches_run_link(self) -> None:
+        names = ("heap.clrs", "max-heapify.clrs", "build-max-heap.clrs", "heapsort.clrs")
+        status, out, err = self.run_cli("compile", *map(example, names))
+        self.assertEqual((status, err), (0, ""))
+        for piece in ("MaxHeapify", "BuildMaxHeap", "HeapSort", "left"):
+            self.assertIn(piece, out)
+
+    def test_compile_with_driver_appends_driver_block(self) -> None:
+        status, out, err = self.run_cli(
+            "compile",
+            example("insertion-sort.clrs"),
+            "--",
+            SORT,
+        )
+        self.assertEqual((status, err), (0, ""))
+        self.assertIn(".driver", out)
+        self.assertIn("CALL InsertionSort", out)
+
+    def test_compile_usage(self) -> None:
+        self.assertEqual(self.run_cli("compile"), (2, "", COMPILE_USAGE + "\n"))
+        self.assertEqual(self.run_cli("compile", "-o"), (2, "", COMPILE_USAGE + "\n"))
 
     def test_driver_may_look_like_a_separator(self) -> None:
         self.assertEqual(self.run_cli("run", "--", "--")[0], 1)

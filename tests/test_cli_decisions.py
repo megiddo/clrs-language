@@ -5,6 +5,7 @@ import logging
 import unittest
 from pathlib import Path
 
+from clrs.cli import CompileCommand
 from clrs.cli import RunCommand
 from clrs.common.decisions import DecisionLog
 
@@ -28,6 +29,14 @@ class CliDecisionLogTest(unittest.TestCase):
     def test_usage_and_run(self) -> None:
         self.assertEqual(self.decisions("run"), ["cli usage"])
         self.assertEqual(self.decisions("run", "--", "1")[0], "cli run")
+
+    def test_compile_records_compile_outcome(self) -> None:
+        sort = str(EXAMPLES / "insertion-sort.clrs")
+        command = CompileCommand(io.StringIO(), io.StringIO(), DecisionLog())
+        with self.assertLogs("clrs", level="INFO") as captured:
+            command.execute(["compile", sort])
+        outcomes = [record.getMessage() for record in captured.records]
+        self.assertIn("cli compile", outcomes)
 
     def test_scalar_renderings(self) -> None:
         cases = {
