@@ -26,6 +26,9 @@ class Block:
     def open(self, directive: str, words: list[str], line: int) -> "Block":
         self._refuse(directive, line)
 
+    def between(self, directive: str, line: int) -> None:
+        self._refuse(directive, line)
+
     def param(self, name: str, line: int) -> None:
         self._refuse(".param", line)
 
@@ -60,6 +63,9 @@ class ClosedBlock(Block):
             return DriverBlock(".driver", "", self._log)
         self._log.record("load", "procedure")
         return RoutineBlock(".proc", words[0], self._log)
+
+    def between(self, directive: str, line: int) -> None:
+        return None
 
     def finish(self, line: int) -> None:
         return None

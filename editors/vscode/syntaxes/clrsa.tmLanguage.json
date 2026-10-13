@@ -2,18 +2,27 @@
   "scopeName": "source.clrsa",
   "name": "CLRS bytecode",
   "patterns": [
+    { "include": "#header" },
     { "include": "#comment" },
     { "include": "#directive" },
     { "include": "#label" },
     { "include": "#instruction" }
   ],
   "repository": {
+    "header": {
+      "match": "^(▷)\\s*(clrsa)\\s+([0-9]+)\\s*$",
+      "captures": {
+        "1": { "name": "comment.line.clrsa" },
+        "2": { "name": "keyword.other.header.clrsa" },
+        "3": { "name": "constant.numeric.version.clrsa" }
+      }
+    },
     "comment": {
       "match": "▷.*$",
       "name": "comment.line.clrsa"
     },
     "directive": {
-      "match": "^\\s*(\\.(?:proc|driver|datatype|param|local|default|end))\\b(.*?)(?=▷|$)",
+      "match": "^\\s*(\\.(?:proc|driver|datatype|param|local|default|entry|module|end))\\b(.*?)(?=▷|$)",
       "captures": {
         "1": { "name": "keyword.control.directive.clrsa" },
         "2": { "patterns": [{ "include": "#constant" }, { "include": "#name" }] }

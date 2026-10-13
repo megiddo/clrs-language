@@ -139,3 +139,28 @@ python3 -m coverage run --source=clrs -m unittest discover -s tests && python3 -
 rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests examples lang editors setup.cfg clrs.mod /tmp/clrs-mut/
 (cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
 ```
+
+## M8 — Packed executable `.clrsa`
+
+- Branch: `clrs/m08-pack-run`, from `b682a2b` (the M7 tip on `clrs/m07-imports`).
+- Why: one `.clrsa` file now carries the linked import graph and a named entry point, so `clrs run app.clrsa` runs a program without a driver on the command line.
+- Format (`clrs/bytecode/model.py`, `loader.py`, `blocks.py`): line 1 exactly `▷ clrsa <digits>` is the header. Version 1 loads; any other number is a `LoadError` on line 1. Any other `▷ clrsa …` line, or a header on a later line, is an ordinary comment, so unversioned library text loads as before. `.module Name` and `.entry Name` are directives that go between blocks (inside a block they are refused like any misplaced directive). `.module` documents which module the next blocks came from. `.entry` needs the header, may appear once (`A second .entry; the first is on line N.`), and resolves by name (Pattern: Specification, `EntrySpecification`) to exactly one routine: a `.proc` of that name or the one `.driver`. No match, or more than one, is a `LoadError`. `Program` gains `entry: str | None`, `format_version: int` (0 without a header), and `entry_routine()`. `Program.text()` writes the header and `.entry` back before the entry routine.
+- Pack (`clrs/run/modules.py`, `engine.py`): `Engine.packed_text(entry)` writes the header, then `.module Name` before each loaded module's listing, then the driver. With a driver, `.entry` comes just before `.driver`, which takes the entry name (default `main`). Without one, `.entry` comes just before `.proc <entry>`. An entry that names both a loaded procedure and the driver, one with neither, or a procedure entry with parameters is a `LinkError` when packing.
+- Run (`Engine.load_packed`, `Engine.run_entry`): merges every `.proc` and `.datatype` of the packed program, so a duplicate name is still a `LinkError`. It then checks that the entry takes no parameters, links every `CALL` (M6 arity), and runs the entry on the machine. A program with no `.entry` is a `LinkError` (`There is no .entry to run; write one with clrs pack.`).
+- CLI (`clrs/cli/pack_command.py`, `command.py`): `python -m clrs pack <entry.clrs> [files...] [-- <driver>] [-o app.clrsa] [--entry name]`. The first file goes through the M7 import graph like `run` and `compile`. Options come in any order; each may appear once, and the entry must be one word. Output goes to `-o` or stdout. Pack faults print `<file>:`, `driver:`, or `pack: link error: …` and exit 1. `run` with a lone `.clrsa` argument runs it packed, and its faults are labelled with that path. Every other `run` command line behaves as before. `main` now dispatches through a table of the three commands and prints all three usage lines. `clrs compile` is unchanged and writes no header or `.entry`.
+- Editor: `clrsa.tmLanguage.json` highlights `.entry` and `.module` as directives and scopes the `▷ clrsa N` header ahead of ordinary comments.
+- Tests: `tests/test_pack.py`: the loader's header, version, entry, and module rules plus 13 load faults; a text round trip; insertion sort and the heap family packed and run through `Engine` (the heap result equals a driver run); a procedure entry `Main()` packed through a temporary `clrs.mod` workspace import; the pack and run link errors; CLI pack to a file and to stdout, options in any order, faults, and eight usage lines; packed-run faults for a library blob, a future version, a runtime fault, and a missing file; `run x.clrs` and `run app.clrsa -- 1` keeping their old paths; `main` dispatch; and a `python -m clrs pack` then `python -m clrs run app.clrsa` subprocess printing `[1, 2, 3, 4, 5, 6]`. `tests/test_clrsa_grammar.py` covers `.entry`, `.module`, and the header. The nine-file table is unchanged and green. 373 tests in all.
+- Coverage: 2940 of 2944 statements in `clrs/` (99.9%). Every module added or changed by M8 is at 100%. The 4 missed lines are pre-existing branches of `CompileInvocation.parse`.
+- Mutmut 3.8: 4592 killed, 9 timed out, 11 survived, of 4612. Killed is 99.6%. Three survivors are in M8 code, and all three are equivalent. One is `argv[:2]` for `argv[:1]` in `main`, which is the same truth test on a non-empty list. The other two change the encoding `load_packed` reads with, which is the same under a UTF-8 locale. The new tests also kill the `main` usage-log and dispatch survivors that M7 left.
+- Decision logs tested in `tests/test_pack_decisions.py`, records only: `load packed`, `load module`, `load entry`, `refuse version`, `refuse entry` (no header, missing, second), `pack driver`, `pack procedure`, `unlinked entry`, `cli pack`, `cli packed`, `cli link` from pack, and `cli usage` from `pack` and from `main`.
+
+Commands:
+
+```sh
+python3 -m unittest discover -s tests
+python3 -m coverage run --source=clrs -m unittest discover -s tests && python3 -m coverage report -m
+rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests examples lang editors setup.cfg clrs.mod /tmp/clrs-mut/
+(cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
+python3 -m clrs pack examples/insertion-sort.clrs -- 'A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A' -o build/app.clrsa
+python3 -m clrs run build/app.clrsa
+```

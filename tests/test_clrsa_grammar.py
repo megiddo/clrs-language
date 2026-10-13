@@ -6,6 +6,8 @@ import unittest
 from pathlib import Path
 
 from clrs.bytecode import COMPARISON_NAMES
+from clrs.bytecode import HEADER
+from clrs.bytecode import PACKED_VERSION
 from clrs.bytecode import Opcode
 from clrs.bytecode.loader import DIRECTIVES
 
@@ -57,6 +59,21 @@ class ClrsaGrammarTest(unittest.TestCase):
         self.assertEqual((match.group(1), match.group(2).strip()), (".param", "key"))
         self.assertIsNone(directive.match(".parameter x"))
         self.assertIn(".param", DIRECTIVES)
+
+    def test_entry_and_module_are_directives_with_a_name(self) -> None:
+        directive = re.compile(self.repository["directive"]["match"])
+        entry = directive.match(".entry main")
+        self.assertEqual((entry.group(1), entry.group(2).strip()), (".entry", "main"))
+        module = directive.match(".module Clrs.Sorting ▷ section")
+        self.assertEqual((module.group(1), module.group(2).strip()), (".module", "Clrs.Sorting"))
+        self.assertIsNone(directive.match(".entrypoint main"))
+
+    def test_packed_header_is_highlighted_before_comments(self) -> None:
+        self.assertEqual(self.grammar["patterns"][0], {"include": "#header"})
+        header = re.compile(self.repository["header"]["match"])
+        self.assertEqual(header.match(f"{HEADER} {PACKED_VERSION}").groups(), ("▷", "clrsa", "1"))
+        self.assertIsNone(header.match("▷ clrsa merged from heap.clrs"))
+        self.assertIsNone(header.match("CONST 1 ▷ clrsa 1"))
 
 
 class ClrsGrammarTest(unittest.TestCase):

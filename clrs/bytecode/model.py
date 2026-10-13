@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 COMMENT = "▷"
+HEADER = f"{COMMENT} clrsa"
+PACKED_VERSION = 1
 
 
 class Opcode(Enum):
@@ -166,12 +168,28 @@ class DatatypeRecord:
 
 @dataclass(frozen=True)
 class Program:
-    """Pattern: Value Object. Loaded blocks in file order."""
+    """Pattern: Value Object. Loaded blocks in file order, plus the packed entry and format version.
+
+    `format_version` is 0 for library text without a `▷ clrsa` header. The loader checks that a
+    named `entry` is exactly one `.proc` of that name or the one `.driver`.
+    """
 
     blocks: tuple[object, ...]
+    entry: str | None = None
+    format_version: int = 0
+
+    def entry_routine(self) -> Routine:
+        routines = [block for block in self.blocks if isinstance(block, Routine)]
+        for routine in routines:
+            if routine.directive == ".proc" and routine.name == self.entry:
+                return routine
+        return next(routine for routine in routines if routine.directive == ".driver")
 
     def text(self) -> str:
-        lines: list[str] = []
+        lines = [f"{HEADER} {self.format_version}"] if self.format_version else []
+        entry = self.entry_routine() if self.entry is not None else None
         for block in self.blocks:
+            if block is entry:
+                lines.append(f".entry {self.entry}")
             lines.extend(block.lines())  # type: ignore[attr-defined]
         return "".join(f"{line}\n" for line in lines)

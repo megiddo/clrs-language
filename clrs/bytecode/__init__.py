@@ -3,6 +3,8 @@
 from clrs.bytecode.model import ARITHMETIC
 from clrs.bytecode.model import COMMENT
 from clrs.bytecode.model import COMPARISON_NAMES
+from clrs.bytecode.model import HEADER
+from clrs.bytecode.model import PACKED_VERSION
 from clrs.bytecode.model import BooleanConstant
 from clrs.bytecode.model import DatatypeRecord
 from clrs.bytecode.model import InfinityConstant
@@ -20,6 +22,8 @@ __all__ = [
     "ARITHMETIC",
     "COMMENT",
     "COMPARISON_NAMES",
+    "HEADER",
+    "PACKED_VERSION",
     "BooleanConstant",
     "DatatypeRecord",
     "InfinityConstant",

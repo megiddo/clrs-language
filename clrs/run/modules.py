@@ -1,6 +1,8 @@
 """Pattern: Repository. Merges loaded module programs into one table of procedures and datatypes."""
 
 from clrs.bytecode import DatatypeRecord
+from clrs.bytecode import HEADER
+from clrs.bytecode import PACKED_VERSION
 from clrs.bytecode import Program
 from clrs.bytecode import Routine
 from clrs.common.decisions import DecisionLog
@@ -63,3 +65,26 @@ class ModuleRepository:
         if self._driver_text is not None:
             parts.append(self._driver_text)
         return "".join(parts)
+
+    def packed(self, entry: str) -> str:
+        """The bundle behind a version header, a `.module` line per module, and `.entry` before its routine."""
+        named = entry in self._routines
+        if named and self._driver_text is not None:
+            self._log.unlinked("entry", f"entry {entry} names both a procedure and the driver.")
+        if not named and self._driver_text is None:
+            self._log.unlinked("entry", f"entry {entry} is not a loaded procedure, and there is no driver.")
+        parts = [f"{HEADER} {PACKED_VERSION}\n"]
+        for name in self.modules():
+            parts.append(f".module {name}\n")
+            parts.append(mark_entry(self.listing(name), f".proc {entry}", entry))
+        if self._driver_text is not None:
+            self._log.record("pack", "driver")
+            parts.append(f".entry {entry}\n{self._driver_text}")
+        else:
+            self._log.record("pack", "procedure")
+        return "".join(parts)
+
+
+def mark_entry(text: str, header: str, entry: str) -> str:
+    lines = [f".entry {entry}\n{line}" if line == header else line for line in text.split("\n")]
+    return "\n".join(lines)

@@ -1,4 +1,4 @@
-"""Pattern: Command. `clrs run` executes drivers; `clrs compile` writes .clrsa without running."""
+"""Pattern: Command. `clrs run` executes drivers or a packed .clrsa; `clrs compile` and `clrs pack` write .clrsa."""
 
 import sys
 from collections.abc import Callable
@@ -13,7 +13,7 @@ from clrs.common.errors import RuntimeFault
 from clrs.common.errors import SourceFault
 from clrs.cli.printer import ValuePrinter
 
-RUN_USAGE = "usage: python -m clrs run [<entry.clrs> [files...]] -- <driver>"
+RUN_USAGE = "usage: python -m clrs run [<entry.clrs> [files...]] -- <driver> | <app.clrsa>"
 USAGE = RUN_USAGE
 
 FAULTS: dict[type[Exception], tuple[str, str]] = {
@@ -44,6 +44,11 @@ class Invocation:
         if len(rest) != 1:
             raise UsageError(RUN_USAGE)
         return cls(tuple(argv[1:split]), rest[0])
+
+
+def is_packed(argv: list[str]) -> bool:
+    """`run app.clrsa` with no other argument runs the packed file's .entry."""
+    return len(argv) == 2 and argv[0] == "run" and argv[1].endswith(".clrsa")
 
 
 class Stage:
@@ -83,6 +88,8 @@ class RunCommand:
         self._log = log
 
     def execute(self, argv: list[str]) -> int:
+        if is_packed(argv):
+            return self._packed(argv[1])
         try:
             invocation = Invocation.parse(argv)
         except UsageError as error:
@@ -90,11 +97,17 @@ class RunCommand:
             self._err.write(f"{error}\n")
             return 2
         self._log.record("cli", "run")
-        return self._stages(invocation, Engine())
-
-    def _stages(self, invocation: Invocation, engine: Engine) -> int:
+        engine = Engine()
         stages = file_stages(invocation.files, engine)
         stages.append(Stage("driver", lambda: engine.run(invocation.driver)))
+        return self._stages(stages)
+
+    def _packed(self, path: str) -> int:
+        self._log.record("cli", "packed")
+        engine = Engine()
+        return self._stages([Stage(path, lambda: engine.run_entry(engine.load_packed(path)))])
+
+    def _stages(self, stages: list[Stage]) -> int:
         result: object = None
         for stage in stages:
             try:
@@ -113,16 +126,13 @@ class RunCommand:
 def main(argv: list[str]) -> int:
     from clrs.cli.compile_command import COMPILE_USAGE
     from clrs.cli.compile_command import CompileCommand
+    from clrs.cli.pack_command import PACK_USAGE
+    from clrs.cli.pack_command import PackCommand
 
     log = DecisionLog()
-    if not argv:
-        sys.stderr.write(RUN_USAGE + "\n" + COMPILE_USAGE + "\n")
-        log.record("cli", "usage")
-        return 2
-    if argv[0] == "run":
-        return RunCommand(sys.stdout, sys.stderr, log).execute(argv)
-    if argv[0] == "compile":
-        return CompileCommand(sys.stdout, sys.stderr, log).execute(argv)
-    sys.stderr.write(RUN_USAGE + "\n" + COMPILE_USAGE + "\n")
+    commands = {"run": RunCommand, "compile": CompileCommand, "pack": PackCommand}
+    if argv[:1] and argv[0] in commands:
+        return commands[argv[0]](sys.stdout, sys.stderr, log).execute(argv)
+    sys.stderr.write(RUN_USAGE + "\n" + COMPILE_USAGE + "\n" + PACK_USAGE + "\n")
     log.record("cli", "usage")
     return 2

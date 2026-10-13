@@ -80,7 +80,8 @@ Do not repair legal transcriptions inside the compiler. `examples/linear-search.
 
 ### M8 — Packed executable `.clrsa`
 
-- [ ] Branch `clrs/m08-pack-run` from M7 tip.
+- [x] Branch `clrs/m08-pack-run` from M7 tip.
+- Chosen rules: the header is line 1 exactly `▷ clrsa <digits>`; any other `▷ clrsa …` line is a comment, and a version other than 1 is a `LoadError`. `.entry` and `.module` sit between blocks; `.entry` needs the header, may appear once, and resolves by name to exactly one routine: a `.proc` of that name or the one `.driver` (none or more than one is a `LoadError`). `clrs pack` writes `.entry` directly before that routine; with a driver the entry labels the driver (default `main`), so an entry that also names a loaded procedure is a `LinkError`, as is one with no procedure and no driver, or a procedure entry with parameters. `clrs run x.clrsa` runs packed only when it is the sole argument; a `.clrsa` without `.entry` is a `LinkError`.
 - Packed format (text): leading `▷ clrsa 1`, optional repeated `.module Name` sections, existing blocks, plus **`.entry <name>`** before the entry routine (`.proc` name or `.driver`).
 - **`clrs pack <entry.clrs> -- <driver> -o app.clrsa [--entry main]`** — resolve imports (M7), link, write header + `.entry`. Default entry name `main` when a driver is supplied.
 - **`clrs run app.clrsa`** — if single argument is a packed file with `.entry`, load and execute entry (no `-- driver`). `.clrsa` without `.entry` behaves as today (library blob) or errors clearly.

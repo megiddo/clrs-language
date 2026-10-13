@@ -4,6 +4,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from clrs.bytecode import DatatypeRecord
+from clrs.bytecode import Program
 from clrs.bytecode import Routine
 from clrs.bytecode.compiler import Compiler
 from clrs.common.decisions import DecisionLog
@@ -21,10 +22,15 @@ from clrs.run.modules import ModuleRepository
 from clrs.front.parser import Parser
 
 
+def is_driver(block: object) -> bool:
+    return isinstance(block, Routine) and block.directive == ".driver"
+
+
 class Engine:
     """Pattern: Facade. One entry point over the parser, compiler, loader, and machine.
 
     `load_file` loads exactly one file and ignores its imports. `load_entry` follows imports through clrs.mod.
+    `packed_text` writes a packed .clrsa; `run_entry` runs one without a driver.
     """
 
     def __init__(self) -> None:
@@ -91,6 +97,34 @@ class Engine:
         routines = self._modules.routines()
         Linker(self._log).link(routines, driver)
         return Machine(routines, self._log).run(driver)
+
+    def packed_text(self, entry: str) -> str:
+        """Return the loaded modules and driver as a packed .clrsa whose `.entry` names `entry`."""
+        text = self._modules.packed(entry)
+        routines = self._modules.routines()
+        if entry in routines:
+            self._check_entry(routines[entry])
+        return text
+
+    def load_packed(self, path: Path | str) -> Program:
+        return Loader().load(Path(path).read_text(encoding="utf-8"))
+
+    def run_entry(self, program: Program) -> object:
+        """Link every procedure and datatype of a packed program, then run its `.entry` with no driver."""
+        if program.entry is None:
+            self._log.unlinked("entry", "There is no .entry to run; write one with clrs pack.")
+        entry = program.entry_routine()
+        library = tuple(block for block in program.blocks if not is_driver(block))
+        self._modules.merge("packed", program.text(), Program(library))
+        self._check_entry(entry)
+        routines = self._modules.routines()
+        Linker(self._log).link(routines, entry)
+        return Machine(routines, self._log).run(entry)
+
+    def _check_entry(self, entry: Routine) -> None:
+        if entry.parameters:
+            count = len(entry.parameters)
+            self._log.unlinked("entry", f"entry {entry.name} takes {count} argument(s), but an entry takes none.")
 
     def listing(self, module: str) -> str:
         return self._modules.listing(module)
