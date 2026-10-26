@@ -1,0 +1,5 @@
+{
+  "name": "clrs-intellij-textmate",
+  "description": "TextMate grammars for .clrs and .clrsa (JetBrains TextMate Bundles plugin)",
+  "version": "0.0.1"
+}
