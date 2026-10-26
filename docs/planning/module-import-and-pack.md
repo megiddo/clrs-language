@@ -18,7 +18,7 @@ TOML, one file, no string imports in source:
 module = "clrs.io/book"
 
 [paths]
-"Clrs.Sorting" = "lib/sorting"
+"Clrs.Sorting" = "examples/lib/sorting"
 "Clrs.Heap"    = "lib/heap"
 "demo"         = "cmd/demo"
 ```
@@ -108,13 +108,13 @@ A plausible migration for this project:
 module = "clrs.io/local"
 
 [paths]
-"Clrs.Sorting" = "lib/sorting"
+"Clrs.Sorting" = "examples/lib/sorting"
 ```
 
 All nine examples already use `Module Clrs.Sorting`; they would live under one mapped directory until split:
 
 ```toml
-"Clrs.Sorting" = "lib/sorting"
+"Clrs.Sorting" = "examples/lib/sorting"
 "Clrs.Heap"    = "lib/heap"
 ```
 
