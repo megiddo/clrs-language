@@ -17,10 +17,10 @@ from clrs.common.decisions import DecisionLog
 from clrs.common.errors import SourceFault
 from clrs.run.manifest import ManifestFinder
 from clrs.vm.values import ClrsArray
+from tests.paths import ROOT, SORTING as SORTING_DIR
 
-ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES = ROOT / "examples"
-SORTING = (EXAMPLES / "insertion-sort.clrs").read_text(encoding="utf-8")
+EXAMPLES = SORTING_DIR
+INSERTION_SOURCE = (SORTING_DIR / "insertion-sort.clrs").read_text(encoding="utf-8")
 MANIFEST = 'module = "test.io/ws"\n\n[paths]\n"Clrs.Sorting" = "lib/sorting"\n"Clrs.Heap" = "lib/heap"\n"demo" = "cmd/demo"\n'
 DEMO = "Module demo\n\nimport Clrs.Sorting\n\nRun(A)\n\tInsertionSort(A)\n\treturn A\n"
 UNSORTED = "[5, 2, 4, 6, 1, 3]"
@@ -43,7 +43,7 @@ class Workspace:
         return path
 
     def sorting(self) -> Path:
-        return self.write("lib/sorting/insertion-sort.clrs", SORTING)
+        return self.write("lib/sorting/insertion-sort.clrs", INSERTION_SOURCE)
 
 
 def items(value: object) -> tuple[object, ...]:
@@ -201,21 +201,21 @@ class ImportFaultTest(ImportCase):
         self.assertEqual(fault.path, str(missing))
         self.assertIsInstance(fault.cause, FileNotFoundError)
 
-    def test_repo_manifest_maps_sorting_to_examples(self) -> None:
+    def test_repo_manifest_maps_sorting_to_lib(self) -> None:
         manifest = ManifestFinder(DecisionLog()).find(EXAMPLES / "insertion-sort.clrs")
         self.assertEqual(manifest.name, "clrs.io/local")
         self.assertEqual(manifest.keys_for(EXAMPLES.resolve()), ("Clrs.Sorting",))
 
-    def test_importing_the_repo_examples_still_stops_at_linear_search(self) -> None:
+    def test_importing_the_repo_sorting_loads_linear_search(self) -> None:
         build = ROOT / "build"
         build.mkdir(exist_ok=True)
         holder = tempfile.TemporaryDirectory(dir=build)
         self.addCleanup(holder.cleanup)
         entry = Path(holder.name) / "main.clrs"
         entry.write_text("Module demo\nimport Clrs.Sorting\n", encoding="utf-8")
-        fault = self.fault(entry)
-        self.assertEqual(fault.path, str((EXAMPLES / "linear-search.clrs").resolve()))
-        self.assertEqual(fault.cause.line, 5)  # type: ignore[attr-defined]
+        engine = Engine()
+        engine.load_entry(entry)
+        self.assertEqual(engine.run(f"LinearSearch({UNSORTED}, 6)"), 4)
 
 
 class ManifestFaultTest(ImportCase):
@@ -248,6 +248,38 @@ class ManifestFaultTest(ImportCase):
         engine.load_entry(entry)
         self.assertEqual(engine.run("P()"), 1)
 
+    def test_require_lists_modules_that_must_be_mapped(self) -> None:
+        text = 'module = "m"\n\n[require]\n"Clrs.Sorting" = "local"\n'
+        self.assertManifestFault(text, "[require] lists Clrs.Sorting, but [paths] and [replace] do not map it.")
+
+    def test_replace_overrides_paths(self) -> None:
+        workspace = Workspace(
+            self,
+            'module = "m"\n\n[paths]\n"Clrs.Sorting" = "lib/old"\n\n[replace]\n"Clrs.Sorting" = "lib/sorting"\n',
+        )
+        workspace.sorting()
+        entry = workspace.write("cmd/demo/main.clrs", DEMO)
+        engine = Engine()
+        engine.load_entry(entry)
+        result = engine.run(f"Run({UNSORTED})")
+        assert isinstance(result, ClrsArray)
+        self.assertEqual(result.items(), (1, 2, 3, 4, 5, 6))
+
+    def test_exclude_blocks_an_import(self) -> None:
+        workspace = Workspace(
+            self,
+            'module = "m"\n\n[paths]\n"Clrs.Sorting" = "lib/sorting"\n\n[exclude]\n"Clrs.Sorting" = true\n',
+        )
+        workspace.sorting()
+        entry = workspace.write("cmd/demo/main.clrs", DEMO)
+        self.assertCompileFault(
+            entry,
+            entry,
+            "module Clrs.Sorting is excluded in clrs.mod of m.",
+            3,
+            1,
+        )
+
     def test_unreadable_manifest(self) -> None:
         workspace = Workspace(self, "")
         (workspace.root / "clrs.mod").mkdir()
@@ -265,6 +297,23 @@ class ManifestFaultTest(ImportCase):
         fault = self.fault(nested)
         self.assertEqual(fault.path, str(unreadable))
         self.assertIsInstance(fault.cause, PermissionError)
+
+
+class AliasTest(ImportCase):
+    def test_qualified_call_reaches_a_shadowed_import(self) -> None:
+        workspace = Workspace(self)
+        workspace.sorting()
+        source = (
+            "Module demo\nimport Clrs.Sorting as Sort\n\n"
+            "InsertionSort(A)\n\treturn 42\n\n"
+            "Run(A)\n\tSort.InsertionSort(A)\n\treturn A\n"
+        )
+        entry = workspace.write("cmd/demo/main.clrs", source)
+        engine = Engine()
+        engine.load_entry(entry)
+        result = engine.run(f"Run({UNSORTED})")
+        assert isinstance(result, ClrsArray)
+        self.assertEqual(result.items(), (1, 2, 3, 4, 5, 6))
 
 
 class ShadowTest(ImportCase):

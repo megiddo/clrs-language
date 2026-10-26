@@ -8,8 +8,9 @@ from pathlib import Path
 from clrs.cli import CompileCommand
 from clrs.cli import RunCommand
 from clrs.common.decisions import DecisionLog
+from tests.paths import FIXTURES, SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 KINDS = {"cli", "print"}
 
 
@@ -64,7 +65,7 @@ class CliDecisionLogTest(unittest.TestCase):
     def test_faults(self) -> None:
         sort = str(EXAMPLES / "insertion-sort.clrs")
         cases = {
-            ("run", str(EXAMPLES / "linear-search.clrs"), "--", "1"): "cli compile",
+            ("run", str(FIXTURES / "broken-for.clrs"), "--", "1"): "cli compile",
             ("run", sort, sort, "--", "1"): "cli link",
             ("run", "--", "⌊1/0⌋"): "cli runtime",
             ("run", str(EXAMPLES / "missing.clrs"), "--", "1"): "cli file",

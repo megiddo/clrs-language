@@ -2,12 +2,14 @@ import unittest
 from pathlib import Path
 
 from clrs_lint.lint import COMMENT_GLYPH, lint_text, lint_path
+from tests.paths import SORTING as SORTING_DIR
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES = ROOT / "examples"
+SORTING = SORTING_DIR
 
 CLEAN = (
     "insertion-sort.clrs",
+    "linear-search.clrs",
     "merge.clrs",
     "mergesort.clrs",
     "bubblesort.clrs",
@@ -22,14 +24,7 @@ class LintExamplesTest(unittest.TestCase):
     def test_clean_examples_have_no_diagnostics(self) -> None:
         for name in CLEAN:
             with self.subTest(name=name):
-                self.assertEqual(lint_path(EXAMPLES / name), [])
-
-    def test_linear_search_for_has_no_direction(self) -> None:
-        diagnostics = lint_path(EXAMPLES / "linear-search.clrs")
-        self.assertEqual(len(diagnostics), 1)
-        self.assertEqual(diagnostics[0].line, 5)
-        self.assertIn("to", diagnostics[0].message)
-        self.assertIn("downto", diagnostics[0].message)
+                self.assertEqual(lint_path(SORTING / name), [])
 
     def test_indent_under_an_assignment_is_an_error(self) -> None:
         source = "Sort(A)\n\tq ← 1\n\t\tSort(A)\n"

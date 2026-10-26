@@ -22,6 +22,7 @@ from clrs.common.errors import CompileError
 from clrs.common.errors import CHAIN_MESSAGE
 from clrs.common.errors import FLOOR_MESSAGE
 from clrs.common.errors import OR_MESSAGE
+from clrs.common.errors import QUALIFIED_MESSAGE
 from clrs.common.errors import SLASH_MESSAGE
 from clrs.front.scope import Scope
 from clrs.front.tokens import COMPARISONS
@@ -177,11 +178,22 @@ class ExpressionBuilder:
 
     def _name(self) -> object:
         token = self._cursor.advance()
+        if self._scope.is_import_alias(token.text) and self._cursor.check(TokenKind.DOT):
+            return self._qualified(token)
         if self._cursor.check(TokenKind.LPAREN):
             return self._paren_call(token)
         if self._cursor.check(TokenKind.LBRACK):
             return self._brackets(token)
         return Name(token.text, token.line, token.column)
+
+    def _qualified(self, alias: Token) -> Call:
+        self._cursor.advance()
+        member = self._cursor.expect(TokenKind.NAME)
+        if not self._cursor.check(TokenKind.LPAREN):
+            self._log.reject("qualified", QUALIFIED_MESSAGE, member.line, member.column)
+        self._cursor.advance()
+        callee = f"{alias.text}.{member.text}"
+        return Call(callee, self._arguments(TokenKind.RPAREN), "paren", alias.line, alias.column)
 
     def _paren_call(self, name: Token) -> Call:
         self._cursor.advance()

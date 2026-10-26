@@ -14,9 +14,10 @@ from clrs.cli import COMPILE_USAGE
 from clrs.cli import RunCommand
 from clrs.cli import RUN_USAGE
 from clrs.common.decisions import DecisionLog
+from tests.paths import FIXTURES, SORTING
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES = ROOT / "examples"
+EXAMPLES = SORTING
 SORT = "A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A"
 
 
@@ -104,7 +105,7 @@ class CommandLineTest(unittest.TestCase):
         self.assertEqual((status, out, err), (1, "", message + "\n"))
 
     def test_compile_error_in_a_file(self) -> None:
-        path = example("linear-search.clrs")
+        path = str(FIXTURES / "broken-for.clrs")
         message = f"{path}: compile error: 5:22: A for loop is missing an end expression."
         self.assert_fault(("run", path, "--", "1"), message)
 
@@ -131,7 +132,7 @@ class CommandLineTest(unittest.TestCase):
         self.assert_fault(("run", missing, "--", "1"), f"{missing}: cannot read: No such file or directory")
 
     def test_first_fault_stops_the_run(self) -> None:
-        bad = example("linear-search.clrs")
+        bad = str(FIXTURES / "broken-for.clrs")
         status, out, err = self.run_cli("run", bad, example("insertion-sort.clrs"), "--", "⌊1/0⌋")
         self.assertEqual((status, out, err.count("\n")), (1, "", 1))
         self.assertTrue(err.startswith(f"{bad}: compile error"))

@@ -21,8 +21,9 @@ from clrs.vm.values import UNASSIGNED
 from clrs.vm.values import ClrsArray
 from clrs.vm.values import constant_value
 from clrs.vm.values import kind
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 
 
 def execute(text: str) -> object:

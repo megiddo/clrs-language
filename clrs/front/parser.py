@@ -10,6 +10,8 @@ from clrs.front.ast import Procedure
 from clrs.front.cursor import TokenCursor
 from clrs.common.decisions import DecisionLog
 from clrs.common.errors import CompileError
+from clrs.common.errors import ALIAS_MESSAGE
+from clrs.common.errors import DUPLICATE_ALIAS_MESSAGE
 from clrs.common.errors import IMPORT_MESSAGE
 from clrs.common.errors import LENGTH_MESSAGE
 from clrs.front.expressions import ExpressionBuilder
@@ -28,6 +30,7 @@ class ModuleBuilder:
     def __init__(self, tokens: tuple[Token, ...], log: DecisionLog) -> None:
         self._cursor = TokenCursor(tokens)
         self._log = log
+        self._import_aliases = frozenset[str]()
 
     def parse(self) -> Module:
         token = self._cursor.expect(TokenKind.MODULE)
@@ -36,6 +39,8 @@ class ModuleBuilder:
         imports: list[Import] = []
         while self._cursor.check(TokenKind.IMPORT):
             imports.append(self._import())
+        self._check_aliases(imports)
+        self._import_aliases = frozenset(item.alias for item in imports if item.alias)
         definitions: list[object] = []
         while not self._cursor.check(TokenKind.EOF):
             definitions.append(self._definition())
@@ -45,8 +50,24 @@ class ModuleBuilder:
         token = self._cursor.advance()
         self._log.record("parse", "import")
         path = self._dotted()
+        alias: str | None = None
+        if self._cursor.check(TokenKind.AS):
+            self._cursor.advance()
+            alias_token = self._cursor.expect(TokenKind.NAME)
+            if self._cursor.check(TokenKind.DOT):
+                self._log.reject("alias", ALIAS_MESSAGE, alias_token.line, alias_token.column)
+            alias = alias_token.text
         self._cursor.expect(TokenKind.NEWLINE)
-        return Import(path, token.line, token.column)
+        return Import(path, token.line, token.column, alias)
+
+    def _check_aliases(self, imports: list[Import]) -> None:
+        seen: set[str] = set()
+        for item in imports:
+            if item.alias is None:
+                continue
+            if item.alias in seen:
+                self._log.reject("alias", DUPLICATE_ALIAS_MESSAGE, item.line, item.column)
+            seen.add(item.alias)
 
     def _dotted(self) -> str:
         name = self._cursor.expect(TokenKind.NAME)
@@ -73,7 +94,7 @@ class ModuleBuilder:
     def _procedure(self) -> Procedure:
         name = self._cursor.expect(TokenKind.NAME)
         self._cursor.expect(TokenKind.LPAREN)
-        scope = Scope()
+        scope = Scope(self._import_aliases)
         parameters = self._names(TokenKind.RPAREN, scope)
         if self._cursor.check(TokenKind.COLON):
             self._cursor.advance()
@@ -118,7 +139,7 @@ class ModuleBuilder:
 
     def _method(self, name: Token) -> Method:
         self._cursor.expect(TokenKind.LBRACK)
-        scope = Scope()
+        scope = Scope(self._import_aliases)
         parameters = self._names(TokenKind.RBRACK, scope)
         self._cursor.expect(TokenKind.COLON)
         self._cursor.expect(TokenKind.NEWLINE)

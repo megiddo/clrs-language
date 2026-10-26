@@ -67,7 +67,7 @@ Run(A)
 - **Visibility (v1):** everything in an imported module is visible. Call sites use **unqualified** names (`MergeSort`, not `Clrs.Sorting.MergeSort`). Local definitions shadow imported names.
 - **Duplicate link names** across imported modules → link error (unchanged rule).
 
-Optional v2 (not v1): `import Clrs.Sorting as Sort` for qualified calls `Sort.MergeSort`. Skip until someone needs it.
+**v2 (implemented on `clrs/cleanup`):** `import Clrs.Sorting as Sort` for qualified calls `Sort.MergeSort`, plus `[require]`, `[replace]`, and `[exclude]` in `clrs.mod`.
 
 **4. Resolution algorithm**
 
@@ -108,7 +108,7 @@ A plausible migration for this project:
 module = "clrs.io/local"
 
 [paths]
-"Clrs.Sorting" = "examples"
+"Clrs.Sorting" = "lib/sorting"
 ```
 
 All nine examples already use `Module Clrs.Sorting`; they would live under one mapped directory until split:

@@ -5,11 +5,12 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Import:
-    """Pattern: Value Object. One `import Clrs.Sorting` line naming a module by its dotted path."""
+    """Pattern: Value Object. One `import Clrs.Sorting` or `import Clrs.Sorting as Sort` line."""
 
     path: str
     line: int
     column: int
+    alias: str | None = None
 
     def accept(self, visitor: object) -> object:
         return visitor.visit_import(self)

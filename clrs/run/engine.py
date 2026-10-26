@@ -56,10 +56,16 @@ class Engine:
     def load_entry(self, path: Path | str) -> None:
         """Load an entry file and, dependencies first, every module it imports. Faults name their file."""
         plan = ImportGraph(self._log).resolve(Path(path), str(path))
+        aliases: list[tuple[str, str]] = []
         for unit in plan.units:
             hidden = plan.hidden(unit)
             for file in unit.files:
+                for request in file.module.imports:
+                    if request.alias is not None:
+                        aliases.append((request.alias, request.path))
                 self._load_parsed(file, hidden)
+        for alias, module in aliases:
+            self._modules.register_qualified(alias, module)
         self._dependencies.update(plan.dependencies())
 
     def load_extra(self, path: Path | str) -> None:
@@ -70,8 +76,10 @@ class Engine:
         self.load_file(path)
 
     def _load_parsed(self, file: SourceFile, hidden: frozenset[str]) -> None:
-        module = self._without(file.module, hidden)
         try:
+            full = Loader().load(Compiler(file.source, self._log).compile(file.module))
+            self._modules.record_module_routines(file.module.name, full)
+            module = self._without(file.module, hidden)
             text = Compiler(file.source, self._log).compile(module)
             self._modules.merge(module.name, text, Loader().load(text))
         except (CompileError, LoadError, LinkError) as error:

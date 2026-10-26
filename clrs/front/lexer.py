@@ -13,6 +13,7 @@ from clrs.front.tokens import column_of
 _KEYWORDS = {
     "Module": TokenKind.MODULE,
     "import": TokenKind.IMPORT,
+    "as": TokenKind.AS,
     "datatype": TokenKind.DATATYPE,
     "extends": TokenKind.EXTENDS,
     "for": TokenKind.FOR,

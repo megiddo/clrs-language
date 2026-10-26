@@ -16,6 +16,7 @@ class ModuleRepository:
         self._listings: dict[str, list[str]] = {}
         self._routines: dict[str, Routine] = {}
         self._datatypes: dict[str, DatatypeRecord] = {}
+        self._module_routines: dict[str, dict[str, Routine]] = {}
         self._driver_text: str | None = None
 
     def merge(self, module: str, text: str, program: Program) -> None:
@@ -36,6 +37,23 @@ class ModuleRepository:
         routine: Routine = block  # type: ignore[assignment]
         self._claim(module, routine.name)
         self._routines[routine.name] = routine
+
+    def record_module_routines(self, module: str, program: Program) -> None:
+        """Remember every procedure name from an unshadowed compile for import aliases."""
+        recorded: dict[str, Routine] = {}
+        for block in program.blocks:
+            if isinstance(block, Routine):
+                recorded[block.name] = block
+        self._module_routines[module] = {**self._module_routines.get(module, {}), **recorded}
+
+    def register_qualified(self, alias: str, module: str) -> None:
+        """Bind alias.Procedure names to the routines compiled for one logical module."""
+        for name, routine in self._module_routines.get(module, {}).items():
+            qualified = f"{alias}.{name}"
+            if qualified in self._routines:
+                self._log.unlinked("duplicate", f"{qualified} is already defined.")
+            self._log.record("import", "alias")
+            self._routines[qualified] = routine
 
     def _claim(self, module: str, name: str) -> None:
         if name in self._routines or name in self._datatypes:

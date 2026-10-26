@@ -161,6 +161,16 @@ python3 -m unittest discover -s tests
 python3 -m coverage run --source=clrs -m unittest discover -s tests && python3 -m coverage report -m
 rm -rf /tmp/clrs-mut && mkdir /tmp/clrs-mut && cp -R clrs clrs_lint tests examples lang editors setup.cfg clrs.mod /tmp/clrs-mut/
 (cd /tmp/clrs-mut && python3 -m mutmut run && python3 -m mutmut results)
-python3 -m clrs pack examples/insertion-sort.clrs -- 'A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A' -o build/app.clrsa
+python3 -m clrs pack lib/sorting/insertion-sort.clrs -- 'A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A' -o build/app.clrsa
 python3 -m clrs run build/app.clrsa
 ```
+
+## Post-merge cleanup — lib/sorting, linear search, import v2
+
+- Branch: `clrs/cleanup`, from merged `master` (`26203e3`, PR #1).
+- Why: close the last nine-file transcription gap, adopt the planned `lib/sorting` layout, and ship manifest/import v2 without a new bytecode version.
+- Linear search: `lib/sorting/linear-search.clrs` now uses `for i ← 1 to length[A] do`, returns the index or `NIL`. CLI compile-error coverage moved to `tests/fixtures/broken-for.clrs`.
+- Layout: all nine contract files live under `lib/sorting/`; repo `clrs.mod` maps `"Clrs.Sorting" = "lib/sorting"` with `[require]`.
+- Import v2: `import Clrs.Sorting as Sort`, qualified calls `Sort.Name(…)` (link names `Sort.Name`), plus `[replace]`, `[require]`, and `[exclude]` tables in `clrs.mod`. Shadowing still drops unqualified imports; full modules are recorded for alias registration.
+- Editor/docs: VS Code grammar highlights `as`; JetBrains TextMate bundles under `editors/jetbrains/`; README tone restored.
+- Tests: 378 tests, all green (`python3 -m unittest discover -s tests`).

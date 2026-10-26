@@ -10,8 +10,9 @@ from clrs import LoadError
 from clrs import compile_driver
 from clrs import compile_module
 from clrs import load_program
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 LOWERING = {"compile", "routine", "datatype", "condition", "and", "if", "address", "reject"}
 LOADING = {"load", "label", "refuse"}
 

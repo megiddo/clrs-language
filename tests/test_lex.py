@@ -10,8 +10,9 @@ from clrs.common.errors import TAB_MIX_MESSAGE
 from clrs.front.lexer import Lexer
 from clrs.front.tokens import Token
 from clrs.front.tokens import TokenKind as K
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 
 
 def flat(source: str) -> list[tuple[K, str]]:

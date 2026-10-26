@@ -1,0 +1,6 @@
+Module Clrs.Sorting
+
+Broken(A)
+	▷ missing end expression on the next line
+	for i ← length[A] to
+		x ← i

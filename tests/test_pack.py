@@ -20,9 +20,10 @@ from clrs.cli import RunCommand
 from clrs.cli import main
 from clrs.common.decisions import DecisionLog
 from clrs.vm.values import ClrsArray
+from tests.paths import SORTING
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES = ROOT / "examples"
+EXAMPLES = SORTING
 SORT = "A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A"
 HEAP = ("heap.clrs", "max-heapify.clrs", "build-max-heap.clrs", "heapsort.clrs")
 HEAP_DRIVER = "A ← [4, 1, 3, 2, 16, 9, 10, 14, 8, 7]; HeapSort(A); A"

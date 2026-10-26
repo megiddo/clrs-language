@@ -20,14 +20,16 @@
       "name": "invalid.illegal.backtick.clrs"
     },
     "import": {
-      "match": "^\\s*(import)\\s+([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)",
+      "match": "^\\s*(import)\\s+([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)(?:\\s+(as)\\s+([A-Za-z_][A-Za-z0-9_]*))?",
       "captures": {
         "1": { "name": "keyword.control.import.clrs" },
-        "2": { "name": "entity.name.namespace.clrs" }
+        "2": { "name": "entity.name.namespace.clrs" },
+        "3": { "name": "keyword.control.import.clrs" },
+        "4": { "name": "variable.other.alias.clrs" }
       }
     },
     "keyword": {
-      "match": "\\b(Module|datatype|extends|for|to|downto|do|while|if|then|else|return|and|or)\\b",
+      "match": "\\b(Module|datatype|extends|for|to|downto|do|while|if|then|else|return|and|or|as)\\b",
       "name": "keyword.control.clrs"
     },
     "constant": {
