@@ -18,8 +18,9 @@ from clrs.cli import PackCommand
 from clrs.cli import RunCommand
 from clrs.cli import main
 from clrs.common.decisions import DecisionLog
+from tests.paths import SORTING
 
-SORT = str(Path(__file__).resolve().parents[1] / "examples" / "insertion-sort.clrs")
+SORT = str(SORTING / "insertion-sort.clrs")
 PROC = ".proc P\nRET\n.end\n"
 DRIVER = ".driver\nCONST 1\nRET\n.end\n"
 KINDS = {"load", "refuse", "pack", "unlinked", "cli"}

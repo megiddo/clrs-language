@@ -60,7 +60,7 @@ clrs.mod               Workspace manifest: dotted module path → directory
 
 clrs_lint/             Transcription linter (structure only)
 editors/vscode/        .clrs and .clrsa highlighting + alias rewrite
-examples/              The nine-file language contract
+lib/sorting/           The nine-file language contract (Module Clrs.Sorting)
 tests/                 Real pipeline; no lexer/parser fakes
 ```
 

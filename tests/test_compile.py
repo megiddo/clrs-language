@@ -7,8 +7,9 @@ from clrs import CompileError
 from clrs import compile_driver
 from clrs import compile_module
 from clrs.common.errors import DEFAULT_MESSAGE
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 
 INSERTION_SORT = """\
 ▷ Module Clrs.Sorting

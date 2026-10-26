@@ -16,8 +16,9 @@ from clrs.common.errors import LENGTH_MESSAGE
 from clrs.common.errors import OR_MESSAGE
 from clrs.common.errors import SLASH_MESSAGE
 from clrs.common.errors import TARGET_MESSAGE
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 
 
 def shape(node: object) -> object:
@@ -123,14 +124,11 @@ class ExampleFilesTest(CompileErrorCase):
             4,
         )
 
-    def test_linear_search_fails_on_line_five(self) -> None:
-        self.assertModuleError(
-            (EXAMPLES / "linear-search.clrs").read_text(), FOR_END_MESSAGE, 5, 22
-        )
-
-    def test_linear_search_without_direction_fails_on_line_five(self) -> None:
-        source = (EXAMPLES / "linear-search.clrs").read_text().replace("length[A] to", "length[A]")
-        self.assertModuleError(source, FOR_DIRECTION_MESSAGE, 5, 19)
+    def test_linear_search_parses(self) -> None:
+        proc = body("linear-search.clrs")
+        self.assertEqual(proc[:3], ("Procedure", "LinearSearch", ("A", "v")))
+        self.assertEqual(proc[3][0][:3], ("ForLoop", "i", I(1)))
+        self.assertEqual(proc[3][-1], ("Return", ("NilLiteral",)))
 
     def test_merge_allocates_and_stores_infinity(self) -> None:
         proc = body("merge.clrs")
@@ -476,7 +474,10 @@ class DriverTest(CompileErrorCase):
 class ImportTest(CompileErrorCase):
     def test_imports_follow_the_module_line(self) -> None:
         module = parse_module("Module demo\nimport Clrs.Sorting\nimport Heap\nP()\n\treturn 1\n")
-        self.assertEqual(shape(module.imports), (("Import", "Clrs.Sorting"), ("Import", "Heap")))
+        self.assertEqual(
+            shape(module.imports),
+            (("Import", "Clrs.Sorting", None), ("Import", "Heap", None)),
+        )
         self.assertEqual([(i.line, i.column) for i in module.imports], [(2, 1), (3, 1)])
         self.assertEqual(shape(module.definitions), (("Procedure", "P", (), (("Return", I(1)),)),))
 
@@ -493,6 +494,22 @@ class ImportTest(CompileErrorCase):
 
     def test_import_is_a_keyword(self) -> None:
         self.assertDriverError("import", "Expected an expression but found 'import'.", 1, 1)
+
+    def test_import_as_binds_an_alias(self) -> None:
+        module = parse_module("Module demo\nimport Clrs.Sorting as Sort\nP()\n\treturn 1\n")
+        self.assertEqual(shape(module.imports), (("Import", "Clrs.Sorting", "Sort"),))
+
+    def test_duplicate_import_aliases_are_rejected(self) -> None:
+        source = "Module demo\nimport Clrs.Sorting as Sort\nimport Clrs.Heap as Sort\nP()\n\treturn 1\n"
+        self.assertModuleError(source, "Two imports use the same alias.", 3, 1)
+
+    def test_qualified_call_parses(self) -> None:
+        source = "Module demo\nimport Clrs.Sorting as Sort\nP(A)\n\treturn Sort.InsertionSort(A)\n"
+        proc = shape(parse_module(source).definitions[0])
+        self.assertEqual(
+            proc[3][0],
+            ("Return", ("Call", "Sort.InsertionSort", (N("A"),), "paren")),
+        )
 
 
 class NodeTest(unittest.TestCase):

@@ -14,13 +14,24 @@ DOTTED = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*")
 
 
 class Manifest:
-    """Pattern: Value Object. The workspace name and the [paths] table of one clrs.mod."""
+    """Pattern: Value Object. The workspace name, [paths], and optional require/replace/exclude tables."""
 
-    def __init__(self, name: str, paths: dict[str, Path]) -> None:
+    def __init__(
+        self,
+        name: str,
+        paths: dict[str, Path],
+        required: frozenset[str],
+        excluded: frozenset[str],
+    ) -> None:
         self.name = name
         self._paths = paths
+        self._required = required
+        self._excluded = excluded
 
     def directory(self, request: Import, log: DecisionLog) -> Path:
+        if request.path in self._excluded:
+            message = f"module {request.path} is excluded in {MANIFEST} of {self.name}."
+            log.reject("exclude", message, request.line, request.column)
         if request.path not in self._paths:
             message = f"unknown module {request.path} (not in {MANIFEST} of {self.name})."
             log.reject("import", message, request.line, request.column)
@@ -77,7 +88,31 @@ class ManifestFinder:
         table = data.get("paths", {})
         if not isinstance(table, dict):
             self._log.reject("manifest", f"[paths] in {MANIFEST} must be a table.", 1, 1)
-        return Manifest(name, self._paths(root, table))
+        paths = self._paths(root, table)
+        replace = data.get("replace", {})
+        if not isinstance(replace, dict):
+            self._log.reject("manifest", f"[replace] in {MANIFEST} must be a table.", 1, 1)
+        paths.update(self._paths(root, replace))
+        required = self._module_keys(data.get("require", {}), "require")
+        excluded = self._module_keys(data.get("exclude", {}), "exclude")
+        for key in required:
+            if key not in paths:
+                message = f"[require] lists {key}, but [paths] and [replace] do not map it."
+                self._log.reject("manifest", message, 1, 1)
+        return Manifest(name, paths, required, excluded)
+
+    def _module_keys(self, table: object, section: str) -> frozenset[str]:
+        if table == {}:
+            return frozenset()
+        if not isinstance(table, dict):
+            self._log.reject("manifest", f"[{section}] in {MANIFEST} must be a table.", 1, 1)
+        keys: set[str] = set()
+        for key in table:
+            if DOTTED.fullmatch(key) is None:
+                message = f"[{section}] entry {key!r} must be a dotted module path."
+                self._log.reject("manifest", message, 1, 1)
+            keys.add(key)
+        return frozenset(keys)
 
     def _paths(self, root: Path, table: dict[str, object]) -> dict[str, Path]:
         paths: dict[str, Path] = {}

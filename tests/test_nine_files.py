@@ -3,13 +3,14 @@
 import unittest
 from pathlib import Path
 
-from clrs import CompileError
 from clrs import Engine
 from clrs import RuntimeFault
 from clrs.bytecode import IntegerConstant
 from clrs.vm.values import ClrsArray
+from clrs.vm.values import NIL
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 UNSORTED = "[5, 2, 4, 6, 1, 3]"
 HEAP_INPUT = "[4, 1, 3, 2, 16, 9, 10, 14, 8, 7]"
 HEAP_FAMILY = ("heap.clrs", "max-heapify.clrs", "build-max-heap.clrs", "heapsort.clrs")
@@ -68,10 +69,12 @@ class MergeTest(unittest.TestCase):
 
 
 class LinearSearchTest(unittest.TestCase):
-    def test_compile_error_on_line_5(self) -> None:
-        with self.assertRaises(CompileError) as caught:
-            engine("linear-search.clrs")
-        self.assertEqual(caught.exception.line, 5)
+    def test_returns_index_or_nil(self) -> None:
+        sort = engine("linear-search.clrs")
+        found = sort.run(f"A ← {UNSORTED}; LinearSearch(A, 6)")
+        self.assertEqual(found, 4)
+        missing = sort.run(f"A ← {UNSORTED}; LinearSearch(A, 99)")
+        self.assertIs(missing, NIL)
 
 
 class HeapTest(unittest.TestCase):

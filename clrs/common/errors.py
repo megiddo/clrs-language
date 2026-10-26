@@ -22,6 +22,9 @@ TARGET_MESSAGE = "This value cannot be assigned."
 BLOCK_INTRO = "which does not open a block."
 DEFAULT_MESSAGE = "A datatype default must be a literal."
 IMPORT_MESSAGE = "An import must come after the Module line and before the first definition."
+ALIAS_MESSAGE = "An import alias must be a single identifier."
+DUPLICATE_ALIAS_MESSAGE = "Two imports use the same alias."
+QUALIFIED_MESSAGE = "A qualified name must be alias.procedure followed by parentheses."
 
 
 class CompileError(Exception):

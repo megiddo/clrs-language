@@ -8,8 +8,9 @@ from pathlib import Path
 from clrs import CompileError
 from clrs import parse_driver
 from clrs import parse_module
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 
 
 class DecisionLogTest(unittest.TestCase):
@@ -76,7 +77,11 @@ class DecisionLogTest(unittest.TestCase):
             (self.driver, "length ← 1; 1", "reject length"),
             (self.driver, "F(a) ← 1; 1", "reject target"),
             (self.module, "Module M\nP(length)\n\treturn 1\n", "reject length"),
-            (self.module, (EXAMPLES / "linear-search.clrs").read_text(), "reject for"),
+            (
+                self.module,
+                "Module M\nP(A)\n\tfor i ← length[A] to\n\t\tx ← i\n",
+                "reject for",
+            ),
             (self.module, "Module M\nP()\n\tfor i ← 1\n\t\tF(i)\n", "reject for"),
             (self.module, "Module M\nP()\n\t\tx ← 1\n", "reject indent"),
             (self.module, "Module M\nP()\n x ← 1\n", "reject indent"),

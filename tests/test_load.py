@@ -17,9 +17,10 @@ from clrs.bytecode import Opcode
 from clrs.bytecode import Program
 from clrs.bytecode import Routine
 from clrs.bytecode import Target
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
-COMPILABLE = sorted(p for p in EXAMPLES.glob("*.clrs") if p.name != "linear-search.clrs")
+EXAMPLES = SORTING
+COMPILABLE = sorted(EXAMPLES.glob("*.clrs"))
 DRIVERS = [
     "A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A",
     "A ← [4, 1, 3, 2, 16, 9, 10, 14, 8, 7]; HeapSort(A); contains[A]",

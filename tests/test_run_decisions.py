@@ -12,8 +12,9 @@ from clrs import RuntimeFault
 from clrs import load_program
 from clrs.common.decisions import DecisionLog
 from clrs.vm.machine import Machine
+from tests.paths import SORTING
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = SORTING
 RUNNING = {"run", "call", "branch", "compare", "attribute", "fault"}
 LINKING = {"module", "unlinked"}
 
