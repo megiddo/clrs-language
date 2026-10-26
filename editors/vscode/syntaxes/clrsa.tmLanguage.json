@@ -1,0 +1,67 @@
+{
+  "scopeName": "source.clrsa",
+  "name": "CLRS bytecode",
+  "patterns": [
+    { "include": "#header" },
+    { "include": "#comment" },
+    { "include": "#directive" },
+    { "include": "#label" },
+    { "include": "#instruction" }
+  ],
+  "repository": {
+    "header": {
+      "match": "^(▷)\\s*(clrsa)\\s+([0-9]+)\\s*$",
+      "captures": {
+        "1": { "name": "comment.line.clrsa" },
+        "2": { "name": "keyword.other.header.clrsa" },
+        "3": { "name": "constant.numeric.version.clrsa" }
+      }
+    },
+    "comment": {
+      "match": "▷.*$",
+      "name": "comment.line.clrsa"
+    },
+    "directive": {
+      "match": "^\\s*(\\.(?:proc|driver|datatype|param|local|default|entry|module|end))\\b(.*?)(?=▷|$)",
+      "captures": {
+        "1": { "name": "keyword.control.directive.clrsa" },
+        "2": { "patterns": [{ "include": "#constant" }, { "include": "#name" }] }
+      }
+    },
+    "label": {
+      "match": "^\\s*([A-Za-z_$][A-Za-z0-9_$]*):",
+      "captures": {
+        "1": { "name": "entity.name.label.clrsa" }
+      }
+    },
+    "instruction": {
+      "begin": "^\\s*(?:(JUMP|JUMP_IF_FALSE)|(CONST|LOAD|STORE|LOAD_IDX|STORE_IDX|LOAD_ATTR|STORE_ATTR|ADD|SUB|MUL|FLOORDIV|CMP|CALL|RET|ALLOC|PACK|POP))\\b",
+      "end": "(?=▷)|$",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.jump.clrsa" },
+        "2": { "name": "keyword.operator.opcode.clrsa" }
+      },
+      "patterns": [
+        { "include": "#constant" },
+        { "include": "#comparison" },
+        { "include": "#label-ref" }
+      ]
+    },
+    "constant": {
+      "match": "\\b(True|False|NIL)\\b|∞|-?\\b[0-9]+\\b",
+      "name": "constant.language.clrsa"
+    },
+    "comparison": {
+      "match": "\\b(lt|gt|le|ge|eq|ne)\\b",
+      "name": "keyword.operator.comparison.clrsa"
+    },
+    "label-ref": {
+      "match": "\\bL_[A-Za-z0-9_]+\\b",
+      "name": "entity.name.label.clrsa"
+    },
+    "name": {
+      "match": "[A-Za-z_$][A-Za-z0-9_$.]*",
+      "name": "variable.other.clrsa"
+    }
+  }
+}

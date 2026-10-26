@@ -1,0 +1,11 @@
+{
+  "comments": {
+    "lineComment": "▷"
+  },
+  "folding": {
+    "markers": {
+      "start": "^\\s*\\.(proc|driver|datatype)\\b",
+      "end": "^\\s*\\.end\\b"
+    }
+  }
+}

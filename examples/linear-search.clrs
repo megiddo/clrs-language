@@ -2,7 +2,7 @@ Module Clrs.Sorting
 
 LinearSearch(A, v)
 	▷ v is the subject of the search
-	for i ← length[A]
+	for i ← length[A] to
 		if v = A[i] then
 			return True
 	return False
