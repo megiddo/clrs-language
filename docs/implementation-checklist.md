@@ -6,7 +6,7 @@ Source of truth for stacked milestones. Implement **one unchecked milestone**, t
 
 **Phase 2** (M5–M8): complete; merged in PR #1.
 
-**Post-merge cleanup** (`clrs/cleanup`): linear-search fix, `lib/sorting` layout, import v2 (`as`, `[require]`, `[replace]`, `[exclude]`).
+**Post-merge cleanup** (`clrs/cleanup`): linear-search fix, `examples/lib/sorting` layout, import v2 (`as`, `[require]`, `[replace]`, `[exclude]`).
 
 Read also: [docs/planning/module-import-and-pack.md](planning/module-import-and-pack.md).
 
@@ -51,8 +51,8 @@ M5–M8: compile, `.param`, `clrs.mod` + imports, pack + packed run. See [docs/m
 
 ## Post-merge cleanup (done on `clrs/cleanup`)
 
-- [x] Fix `lib/sorting/linear-search.clrs` to book-style LINEAR-SEARCH (`for i ← 1 to length[A] do`, return index or `NIL`).
-- [x] Move the nine-file contract from `examples/` to `lib/sorting/`; repo `clrs.mod` maps `"Clrs.Sorting" = "lib/sorting"`.
+- [x] Fix `examples/lib/sorting/linear-search.clrs` to book-style LINEAR-SEARCH (`for i ← 1 to length[A] do`, return index or `NIL`).
+- [x] Nine-file contract under `examples/lib/sorting/`; repo `clrs.mod` maps `"Clrs.Sorting" = "examples/lib/sorting"`.
 - [x] Import v2: `import Clrs.Sorting as Sort`, qualified calls `Sort.Procedure(…)`, manifest `[require]`, `[replace]`, `[exclude]`.
 - [x] JetBrains TextMate bundles under `editors/jetbrains/`; whimsical README restored.
 - [x] Compile-error CLI tests use `tests/fixtures/broken-for.clrs` instead of the fixed linear-search file.

@@ -36,14 +36,14 @@ Now, by the grace of our savior Claude, I don't have to actually finish learning
 Run a driver over the sorting library:
 
 ```bash
-python3 -m clrs run lib/sorting/insertion-sort.clrs -- 'A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A'
+python3 -m clrs run examples/lib/sorting/insertion-sort.clrs -- 'A ← [5, 2, 4, 6, 1, 3]; InsertionSort(A); A'
 ```
 
 Compile to textual bytecode (stdout, or `-o`):
 
 ```bash
-python3 -m clrs compile lib/sorting/insertion-sort.clrs -o build/insertion-sort.clrsa
-python3 -m clrs compile lib/sorting/heap.clrs lib/sorting/heapsort.clrs -o build/heapsort.clrsa
+python3 -m clrs compile examples/lib/sorting/insertion-sort.clrs -o build/insertion-sort.clrsa
+python3 -m clrs compile examples/lib/sorting/heap.clrs examples/lib/sorting/heapsort.clrs -o build/heapsort.clrsa
 ```
 
 ### Module imports
@@ -57,7 +57,7 @@ Imports are **structured dotted paths**, not string file paths (Go-style workspa
 module = "clrs.io/local"
 
 [paths]
-"Clrs.Sorting" = "lib/sorting"
+"Clrs.Sorting" = "examples/lib/sorting"
 
 [require]
 "Clrs.Sorting" = "local"
@@ -69,7 +69,7 @@ Optional v2 tables (same TOML file):
 - **`[exclude]`** — block importing a module path even if it is mapped.
 - **`import Clrs.Sorting as Sort`** — qualified calls such as `Sort.MergeSort(A, 1, n)` reach the imported module even when a local definition shadows the unqualified name.
 
-3. Every file in a mapped directory must declare the **same** `Module` line as the map key (`Module Clrs.Sorting` for `"Clrs.Sorting" = "lib/sorting"`).
+3. Every file in a mapped directory must declare the **same** `Module` line as the map key (`Module Clrs.Sorting` for `"Clrs.Sorting" = "examples/lib/sorting"`).
 4. In your entry file, **`import`** the modules you need (after `Module`, before any procedure). The compiler loads **all** `*.clrs` in each mapped directory, follows **transitive** imports, and rejects **cycles**.
 
 **Example entry file** (`cmd/demo/main.clrs` — create locally if you like):
