@@ -3,5 +3,5 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SORTING = ROOT / "lib" / "sorting"
+SORTING = ROOT / "examples" / "lib" / "sorting"
 FIXTURES = ROOT / "tests" / "fixtures"
